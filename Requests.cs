@@ -102,7 +102,7 @@ namespace PaperCapture
             data["document_id"] = documentID;
             data["work_type"] = workType;
             string json = JsonConvert.SerializeObject(data);
-            PostJSON("http://localhost:5006/manual", json);
+            PostJSON("http://localhost:5006/workitem", json);
         }
     }
 }
