@@ -94,8 +94,26 @@ namespace PaperCapture
             return formtype.type;
         }
 
-        internal static void CreateWorklistItem(int documentID, string formType, string workType)
+        internal static void CreateWorklistItem(int documentID, string formType)
         {
+            string workType = "bank_regn";
+            switch (formType)
+            {
+                case "WO(B) Amend":
+                    workType = "amend";
+                    formType = "WO(B)";
+                    break;
+
+                case "Full Search":
+                case "Search":
+                    workType = "search";
+                    break;
+
+                case "OC":
+                    workType = "oc";
+                    break;
+            }
+
             Dictionary<string, dynamic> data = new Dictionary<string, dynamic>();
             data["application_type"] = formType;
             data["date"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");

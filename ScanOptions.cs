@@ -22,20 +22,32 @@ namespace PaperCapture
 
         private void scanButton_Click(object sender, EventArgs e)
         {
-            // Just scan 1 for now...
             ScannerControl control = new ScannerControl((int)numPagesInput.Value, twoSidesCheckbox.Checked);
-            List<Image> images = control.Scan();
 
-            if (images.Count > 0)
+            try
             {
-                int id = Requests.CreateDocument();
-                foreach (Image image in images)
+                while (true)
                 {
-                    Requests.AddImageToDocument(id, image);
+                    List<Image> images = control.Scan();
+
+                    if (images.Count > 0)
+                    {
+                        int id = Requests.CreateDocument();
+                        foreach (Image image in images)
+                        {
+                            Requests.AddImageToDocument(id, image);
+                        }
+                        string formType = Requests.GetFormType(id);
+                        Requests.CreateWorklistItem(id, formType);
+                        //MessageBox.Show("Worklist item created");
+                    }
                 }
-                string formType = Requests.GetFormType(id);
-                Requests.CreateWorklistItem(id, formType, "bank_regn");
-                MessageBox.Show("Worklist item created");
+            }
+            catch (Exception ex)
+            {
+                Debug.Print(ex.Message);
+
+                // TODO: make sure the exception really is "there's no more paper".
             }
         }
     }
