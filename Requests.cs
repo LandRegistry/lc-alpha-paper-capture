@@ -6,33 +6,45 @@ using System.Net;
 using System.IO;
 using Newtonsoft.Json;
 using System.Drawing;
+using System.Windows.Forms;
 
 namespace PaperCapture
 {
     class Requests
     {
+        private static string documentAPI = @"http://localhost:5014";
+        private static string caseworkAPI = @"http://localhost:5006";
         private static dynamic PostJSON(string url, string data)
         {
-            WebRequest request = WebRequest.Create(url);
-            request.Method = "POST";
-            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(data);
-            request.ContentType = "application/json";
-            request.ContentLength = bytes.Length;
-            Stream s = request.GetRequestStream();
-            s.Write(bytes, 0, bytes.Length);
-            s.Close();
-
-            WebResponse response = request.GetResponse();
-            byte[] rdata;
-            using (var ms = new MemoryStream())
+            try
             {
-                response.GetResponseStream().CopyTo(ms);
-                rdata = ms.ToArray();
-            }
+                WebRequest request = WebRequest.Create(url);
+                request.Method = "POST";
+                byte[] bytes = System.Text.Encoding.UTF8.GetBytes(data);
+                request.ContentType = "application/json";
+                request.ContentLength = bytes.Length;
+                Stream s = request.GetRequestStream();
+                s.Write(bytes, 0, bytes.Length);
+                s.Close();
 
-            string resp = System.Text.Encoding.UTF8.GetString(rdata);
-            return JsonConvert.DeserializeObject(resp);
+                WebResponse response = request.GetResponse();
+                byte[] rdata;
+                using (var ms = new MemoryStream())
+                {
+                    response.GetResponseStream().CopyTo(ms);
+                    rdata = ms.ToArray();
+                }
+
+                string resp = System.Text.Encoding.UTF8.GetString(rdata);
+                return JsonConvert.DeserializeObject(resp);
+            }
+            catch (Exception exp)
+            {                
+                throw new System.ArgumentException("Error posting data to " + url + ". "+ exp.Message);             
+            }
         }
+
+     
 
         private static dynamic Get(string url)
         {
@@ -64,7 +76,6 @@ namespace PaperCapture
             Stream s = request.GetRequestStream();
             s.Write(bytes, 0, bytes.Length);
             s.Close();
-
             WebResponse response = request.GetResponse();
             byte[] rdata;
             using (var stream = new MemoryStream())
@@ -72,55 +83,50 @@ namespace PaperCapture
                 response.GetResponseStream().CopyTo(stream);
                 rdata = stream.ToArray();
             }
-
             string resp = System.Text.Encoding.UTF8.GetString(rdata);
             return JsonConvert.DeserializeObject(resp);
-        }
+        }       
 
-        internal static int CreateDocument()
+        internal static dynamic AddImageToDocument(int pDocID, Image pImage, string pPaperSize)
         {
-            dynamic document = PostJSON("http://localhost:5014/document", "{}");
-            return document.id;
-        }
-
-        internal static void AddImageToDocument(int documentID, Image image)
-        {
-            dynamic document = PostImage("http://localhost:5014/document/" + documentID.ToString() + "/image", image);
-        }
+            try
+            {
+                dynamic document;
+                if (pDocID == 0) //first images calls different route
+                {
+                    document = PostImage(caseworkAPI + @"/forms/" + pPaperSize, pImage);
+                }
+                else
+                {
+                    document = PostImage(caseworkAPI + @"/forms/" + pDocID.ToString() + "/" + pPaperSize, pImage);
+                }
+                MessageBox.Show("Document " + document.id + " created");
+                return document; 
+            }
+            catch (Exception exp)
+            {
+                throw exp;
+            }
+           }
 
         internal static string GetFormType(int documentID)
         {
-            dynamic formtype = Get("http://localhost:5014/document/" + documentID.ToString() + "/image/1/formtype");
+//            string url = caseworkAPI + @"/forms/" + documentID.ToString() + "/images/1/formtype";
+            string url = caseworkAPI + @"/forms/" + documentID.ToString();
+            dynamic formtype = Get(url);
             return formtype.type;
         }
 
-        internal static void CreateWorklistItem(int documentID, string formType)
+        internal static void CreateWorklistItem(int documentID, string formType, string workType)
         {
-            string workType = "bank_regn";
-            switch (formType)
-            {
-                case "WO(B) Amend":
-                    workType = "amend";
-                    formType = "WO(B)";
-                    break;
-
-                case "Full Search":
-                case "Search":
-                    workType = "search";
-                    break;
-
-                case "OC":
-                    workType = "oc";
-                    break;
-            }
-
             Dictionary<string, dynamic> data = new Dictionary<string, dynamic>();
             data["application_type"] = formType;
-            data["date"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            data["date_received"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
             data["document_id"] = documentID;
             data["work_type"] = workType;
+            data["application_data"] = "";
             string json = JsonConvert.SerializeObject(data);
-            PostJSON("http://localhost:5006/workitem", json);
+            dynamic id = PostJSON(caseworkAPI + @"/applications", json);
         }
     }
 }
