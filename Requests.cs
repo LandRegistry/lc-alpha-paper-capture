@@ -7,12 +7,12 @@ using System.IO;
 using Newtonsoft.Json;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Drawing.Imaging;
 
 namespace PaperCapture
 {
     class Requests
     {
-        private static string documentAPI = @"http://localhost:5014";
         private static string caseworkAPI = @"http://localhost:5006";
         private static dynamic PostJSON(string url, string data)
         {
@@ -66,12 +66,18 @@ namespace PaperCapture
         private static dynamic PostImage(string url, Image image)
         {
             MemoryStream ms = new MemoryStream();
-            image.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);
+            //set compression parameters
+            ImageCodecInfo codec = getEncoderInfo("image/tiff");
+            System.Drawing.Imaging.Encoder coder = System.Drawing.Imaging.Encoder.Compression;
+            EncoderParameters pars = new EncoderParameters(1);
+            EncoderParameter par = new EncoderParameter(coder, (long)EncoderValue.CompressionCCITT4);
+            pars.Param[0] = par;
+            //image.Save(ms, System.Drawing.Imaging.ImageFormat.Tiff);
+            image.Save(ms, codec, pars);
             byte[] bytes = ms.ToArray();
-
             WebRequest request = WebRequest.Create(url);
             request.Method = "POST";
-            request.ContentType = "image/jpeg";
+            request.ContentType = "image/tiff";
             request.ContentLength = bytes.Length;
             Stream s = request.GetRequestStream();
             s.Write(bytes, 0, bytes.Length);
@@ -85,29 +91,43 @@ namespace PaperCapture
             }
             string resp = System.Text.Encoding.UTF8.GetString(rdata);
             return JsonConvert.DeserializeObject(resp);
-        }       
+        }
 
-        internal static dynamic AddImageToDocument(int pDocID, Image pImage, string pPaperSize)
+        /// <summary>
+        /// Add an image to a document, the first page calls a route on casework-api that returns the form type unless
+        /// the caseworker has chose to override it. 
+        /// 
+        /// Subsequent pages pass in the document id. 
+        /// 
+        /// pChannelInd  is "PO" - post
+        ///                 "FX" - fax
+        ///                 "PF" - portal fallout
+        /// </summary>
+        /// <param name="pDocID"></param>
+        /// <param name="pImage"></param>
+        /// <param name="pPaperSize"></param>
+        /// <param name="pFormType"></param>
+        /// <returns></returns>
+        internal static dynamic AddImageToDocument(int pDocID, Image pImage, string pPaperSize, string pFormType, string pChannelInd)
         {
             try
             {
+                //MessageBox.Show("format " + pImage.RawFormat.ToString());
                 dynamic document;
-                if (pDocID == 0) //first images calls different route
-                {
-                    document = PostImage(caseworkAPI + @"/forms/" + pPaperSize, pImage);
-                }
-                else
-                {
-                    document = PostImage(caseworkAPI + @"/forms/" + pDocID.ToString() + "/" + pPaperSize, pImage);
-                }
-                MessageBox.Show("Document " + document.id + " created");
-                return document; 
+                string url = caseworkAPI + @"/forms/";
+                if (pDocID > 0)
+                { url = url + pDocID.ToString() + "/"; } //subsequent pages use a different route
+                url = url + pPaperSize + "?channel=" + pChannelInd;
+                if (pFormType != "") { url = url + "&type=" + pFormType; }
+                //caseworkAPI + @"/forms/" + pDocID.ToString() + "/" + pPaperSize, , "");               
+                document = PostImage(url, pImage);
+                return document;
             }
             catch (Exception exp)
             {
                 throw exp;
             }
-           }
+        }
 
         internal static string GetFormType(int documentID)
         {
@@ -116,6 +136,27 @@ namespace PaperCapture
             dynamic formtype = Get(url);
             return formtype.type;
         }
+
+        internal static string GetAPIStatus()
+        {
+            string url = caseworkAPI + @"/health";
+            dynamic APIStatus = "";
+            try
+            {
+
+                dynamic response = Get(url);
+                dynamic data = JsonConvert.DeserializeObject(response.ToString());
+                APIStatus = "LC Casework API status: " + data.dependencies["land-charges"];
+
+            }
+            catch (Exception exp)
+            {
+                APIStatus = exp.Message.ToString();
+            }
+
+            return APIStatus.ToString();
+        }
+
 
         internal static void CreateWorklistItem(int documentID, string formType, string workType)
         {
@@ -128,5 +169,18 @@ namespace PaperCapture
             string json = JsonConvert.SerializeObject(data);
             dynamic id = PostJSON(caseworkAPI + @"/applications", json);
         }
+
+        private static ImageCodecInfo getEncoderInfo(string mimeType)
+        {
+            // Get image codecs for all image formats
+            ImageCodecInfo[] codecs = ImageCodecInfo.GetImageEncoders();
+
+            // Find the correct image codec
+            for (int i = 0; i < codecs.Length; i++)
+                if (codecs[i].MimeType == mimeType)
+                    return codecs[i];
+            return null;
+        }
+
     }
 }

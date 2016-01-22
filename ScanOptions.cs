@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using System.Diagnostics;
 using System.Net;
 using System.IO;
+using System.Threading;
 using Newtonsoft.Json;
 using System.Windows.Media.Imaging;
 using WIA;
@@ -21,7 +22,8 @@ namespace PaperCapture
         public ScanOptions()
         {
             InitializeComponent();
-            cmbxWorkType.SelectedIndex = 0;
+            cmbxWorkList.SelectedIndex = 0;
+            cmbxFormType.SelectedIndex = 0;
             string scnrNam = "";
             try
             {
@@ -34,11 +36,25 @@ namespace PaperCapture
                 string msg = MsgTranslate(exp.Message);
                 tbxOutput.AppendText(msg);
             }
+            LogMsg(Requests.GetAPIStatus());
             cmbxSource.Items.Add("Scanner Document Feeder: " + scnrNam);
             cmbxSource.Items.Add("Scanner Flatbed: " + scnrNam);
             cmbxSource.Items.Add("File Import");
             cmbxSource.SelectedIndex = 0;
-            string val = readRegistry("ScanAndSend");
+            string val = readRegistry("ShowLog");
+            if (val != "")
+            {
+                try
+                {
+                    showLog(Convert.ToBoolean(val));
+                }
+                catch
+                {
+                    LogMsg("ShowLog value is invalid in the registry. Should be true or false");
+                }
+            }
+            
+            val = readRegistry("ScanAndSend");
             if (val != "")
             {
                 try
@@ -142,24 +158,32 @@ namespace PaperCapture
                         //first call returns the doc id, pass this in to subsequent pages
                         int id = 0;
                         dynamic vDocInfo;
-                        string formType = "";
+                        string formType = formTypeOverride("");
                         foreach (Image vImage in doc.ImgLst)
                         {
                             //pass id of 0 to indicate first page of a new document
-                            vDocInfo = Requests.AddImageToDocument(id, vImage, doc.PaperSize);
-                            id = vDocInfo.id;
-                            formType = vDocInfo.form_type;
+                            vDocInfo = Requests.AddImageToDocument(id, vImage, doc.PaperSize, formTypeOverride(""), getChannel());
+                            if (id == 0)
+                            {
+                                id = vDocInfo.id;
+                                formType = vDocInfo.form_type.ToString(); // formTypeOverride(vDocInfo.form_type.ToString());
+                            }
                         }
-                        Requests.CreateWorklistItem(id, formType, getWorkType(cmbxWorkType.Text));
-                        LogMsg("Worklist item created: ID " + id.ToString() + " Type: " + formType);
+                        Requests.CreateWorklistItem(id, formType, getWorkType(cmbxWorkList.Text));
+                        LogMsg("Item added to " + cmbxWorkList.Text + " Worklist (ID: " + id.ToString() + " Type: " + formType + ")");
+                        tslblStatus.Text = formType + " " + id.ToString() + " sent to " + cmbxWorkList.Text;                        
+                        Application.DoEvents();
                         tsProg.PerformStep();
+                        Application.DoEvents();
+                        string msg = " " + formType + " sent to " + cmbxWorkList.Text; 
+                        tslblStatus.Text = msg;
                         Application.DoEvents();
                     }
                 }
                 else //display the batch
                 {
                     frmScannedDocs frm = new frmScannedDocs(this);
-                    frm.buildTree(DocBatch, getWorkType(cmbxWorkType.Text));
+                    frm.buildTree(DocBatch, getWorkType(cmbxWorkList.Text), formTypeOverride(""), getChannel());
                     frm.ShowDialog();
                 }
 
@@ -179,6 +203,7 @@ namespace PaperCapture
             finally
             {
                 tsProg.Value = 0;
+                tslblStatus.Text = "Ready";
             }
         }
 
@@ -193,11 +218,11 @@ namespace PaperCapture
                     string formType = "";
                     foreach (Image vImage in doc.ImgLst)
                     {                        
-                        vDoc = Requests.AddImageToDocument(id, vImage, doc.PaperSize);
+                        vDoc = Requests.AddImageToDocument(id, vImage, doc.PaperSize, formTypeOverride(""), getChannel());
                         id = vDoc.id;
-                        formType = vDoc.form_type;
+                        formType = vDoc.form_type.ToString(); //formTypeOverride(vDoc.form_type.ToString());                        
                     }                    
-                    Requests.CreateWorklistItem(id, formType, getWorkType(cmbxWorkType.Text));
+                    Requests.CreateWorklistItem(id, formType, getWorkType(cmbxWorkList.Text));
                     tbxOutput.AppendText("Worklist item created: ID " + id.ToString() + " Type: " + formType + Environment.NewLine);
                 }
             }
@@ -214,7 +239,22 @@ namespace PaperCapture
                 }
             }
         }
-        
+
+        /// <summary>
+        /// if the user has selected to override the OCR detection of form type then we pass the relevant value instead
+        /// </summary>
+        /// <param name="pFormType"></param>
+        /// <returns></returns>
+        public string formTypeOverride(string pFormType)
+        {
+            if (cmbxFormType.SelectedIndex > 0)
+            {   //override the form type returned from the OCR with selected value
+                pFormType = cmbxFormType.SelectedItem.ToString();
+            }
+            return pFormType;
+        }
+
+
         /// <summary>
         /// Scan the documents using a physical scanning device. 
         /// </summary>
@@ -318,7 +358,14 @@ namespace PaperCapture
             pMsg = pMsg.ToUpper();
             if (pMsg == "KEINEN SCANNER GEFUNDEN.") { outMsg = "Scanner not found"; }
             if (pMsg == "PROPERTY WIRD NICT UNTERSTÜTZT") { outMsg = "Property is not supported"; }
-            if (pMsg == "EXCEPTION FROM HRESULT: 0X80210003") { outMsg = "There are no documents in the document feeder"; }
+            if (pMsg == "EXCEPTION FROM HRESULT: 0X80210003") { 
+                outMsg = "There are no documents in the document feeder.";
+                if (!cbxScanAll.Checked)
+                {
+                    outMsg = outMsg + " " + numDocsInput.Value + " were documents expected. Please check and scan again";
+                }
+                
+            }
             if (pMsg == "EXCEPTION FROM HRESULT: 0X80210004") { outMsg = "An unspecified problem occurred with the scanner's document feeder."; }
             if (pMsg == "EXCEPTION FROM HRESULT: 0X80210006") { outMsg = "The device is busy. Close any apps that are using this device or wait for it to finish and then try again."; }
             if (pMsg == "EXCEPTION FROM HRESULT: 0x80210002") { outMsg = "Paper is jammed in the scanner's document feeder."; }
@@ -395,10 +442,10 @@ namespace PaperCapture
                 foreach (Image img in doc.ImgLst)
                 {
                     //pass 0 in to indicate the first page of a new document
-                    id = Requests.AddImageToDocument(id, img, doc.PaperSize);
+                    id = Requests.AddImageToDocument(id, img, doc.PaperSize, formTypeOverride(""), getChannel());
                 }
-                string formType = Requests.GetFormType(id);
-                Requests.CreateWorklistItem(id, formType, getWorkType(cmbxWorkType.Text));
+                string formType = formTypeOverride(Requests.GetFormType(id));                               
+                Requests.CreateWorklistItem(id, formType, getWorkType(cmbxWorkList.Text));
                 LogMsg("Worklist item created: ID " + id.ToString() + " Type: " + formType);
             }
         }
@@ -443,14 +490,63 @@ namespace PaperCapture
         private string getWorkType(string pWrkType)
         {
             string res = pWrkType;
-            if (pWrkType == "Bankruptcy Registration") { res = "bank_regn"; }
-            if (pWrkType == "Land Charges Registration") { res = "lc_regn"; }
-            if (pWrkType == "Amendment") { res = "amend"; }
-            if (pWrkType == "Cancellation") { res = "cancel"; }
+            if (pWrkType == "Bankruptcy - Registrations") { res = "bank_regn"; }
+            if (pWrkType == "Bankruptcy - Amendments") { res = "bank_amend"; }
+            if (pWrkType == "Bankruptcy - Rectifications") { res = "bank_rect"; }
+            if (pWrkType == "Bankruptcy - Withheld address") { res = "bank_with"; }
+            if (pWrkType == "LC - Registrations") { res = "lc_regn"; }
+            if (pWrkType == "LC - Priority Notices") { res = "lc_pn"; }
+            if (pWrkType == "LC - Rectifications") { res = "lc_rect"; }
+            if (pWrkType == "LC - Renewals") { res = "lc_renewal"; }
+            if (pWrkType == "Cancellations") { res = "cancel"; }
+            if (pWrkType == "Part Cancellations") { res = "canc_part"; }
             if (pWrkType == "Portal Search") { res = "prt_search"; }
-            if (pWrkType == "Search") { res = "search"; }
-            if (pWrkType == "Official Copy") { res = "oc"; }
+            if (pWrkType == "Searches - Full") { res = "search_full"; }
+            if (pWrkType == "Searches - Bankruptcy") { res = "search_bank"; }
+            if (pWrkType == "Office Copy") { res = "oc"; }
             return res;
+        }
+
+        private void pbxShowLog_Click(object sender, EventArgs e)
+        {
+            //toggle show or hide log
+            
+            
+            showLog(!tbxOutput.Visible);            
+        }
+
+        private void showLog(bool pShow)
+        {
+            if (pShow)
+            {
+                tbxOutput.Visible = true;
+                pbxShowLog.Image = imglstMain.Images[0];
+                this.Height = 628;
+                gpbxLog.Height = 250; 
+            }
+            else
+            {
+                tbxOutput.Visible = false;
+                pbxShowLog.Image = imglstMain.Images[1];
+                this.Height = 400;
+                gpbxLog.Height = 20;
+            }
+
+            writeRegistry("ShowLog", pShow.ToString());
+        }
+
+        private string getChannel()
+        {
+            string channel = "PO"; //default to Postal
+            if (rdbFax.Checked) 
+            {
+                channel = "FX";
+            }
+            else if (rdbPortalFallout.Checked) 
+            {
+                channel = "PF";
+            }
+            return channel;
         }
 
     }

@@ -22,6 +22,8 @@ namespace PaperCapture
         private ScanOptions parentFrm;
         private List<LCDoc> docBatch;
         private string workType;
+        private string formTypeOverride;
+        private string channelInd;
         private bool showingPrev = false;
         private ImageList imgLst;
 
@@ -29,9 +31,11 @@ namespace PaperCapture
         /// Adds nodes to the tree view to allow the user to check before sending the batch
         /// </summary>
         /// <param name="pDocBatch">List of LCDoc objects</param>
-        public void buildTree(List<LCDoc> pDocBatch, string pWorkType)
+        public void buildTree(List<LCDoc> pDocBatch, string pWorkType, string pFormTypeOverride, string pChannelInd)
         {
             this.workType = pWorkType;
+            this.formTypeOverride = pFormTypeOverride;
+            this.channelInd = pChannelInd;
             docBatch = pDocBatch;
             trvwMain.Nodes.Clear();
             trvwMain.ItemHeight = 32;
@@ -154,10 +158,18 @@ namespace PaperCapture
                     dynamic vDoc;
                     string formType = "";
                     foreach (Image image in doc.ImgLst)
-                    {
-                        vDoc = Requests.AddImageToDocument(id, image, doc.PaperSize);
+                    {                        
+                        vDoc = Requests.AddImageToDocument(id, image, doc.PaperSize, formTypeOverride, channelInd);
+                        if (formTypeOverride == "")
+                        {
+                            formType = vDoc.form_type.ToString();
+                        }
+                        else
+                        {
+                            formType = formTypeOverride;
+                        }
                         id = vDoc.id;
-                        formType = vDoc.form_type;
+                        
                         tsLblStatus.Text = "Sending Form " + (i+1).ToString() + " page " + (x + 1).ToString();
                         tsProgBr.PerformStep();
                         Application.DoEvents();

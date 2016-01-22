@@ -46,32 +46,7 @@ namespace PaperCapture
         {
             return device.PerformScan().ToList();
         }
-
-        //This doesnt work
-        //public bool HasPages()
-        //    ///check that the document feeder has a page in it
-        //{
-        //    Property documentHandlingSelect = null;
-        //    Property documentHandlingStatus = null;
-
-        //    foreach (Property prop in device.Device.Properties)
-        //    {
-                
-        //        MessageBox.Show(prop.Name + prop.ToString());
-        //       //if (prop.PropertyID == WIA_PROPERTIES.WIA_DPS_DOCUMENT_HANDLING_SELECT)
-        //     //       documentHandlingSelect = prop;
-        //    //    if (prop.PropertyID == WIA_PROPERTIES.WIA_DPS_DOCUMENT_HANDLING_STATUS)
-        //    //        documentHandlingStatus = prop;
-        //    }
-        //    bool hasMorePages = false;
-        //  //  if ((Convert.ToUInt32(documentHandlingSelect.get_Value()) & WIA_DPS_DOCUMENT_HANDLING_SELECT.FEEDER) != 0)
-        //  //  {
-        //  //      hasMorePages = ((Convert.ToUInt32(documentHandlingStatus.get_Value()) & WIA_DPS_DOCUMENT_HANDLING_STATUS.FEED_READY) != 0);
-        //  //  }
-        //    return hasMorePages;
-        //}
-
-     
+           
 
         private void setupScanner()
         {
