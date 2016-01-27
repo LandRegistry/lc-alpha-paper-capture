@@ -65,7 +65,7 @@ namespace PaperCapture
 
         private static dynamic PostImage(string url, Image image)
         {
-            MemoryStream ms = new MemoryStream();
+            MemoryStream ms = new MemoryStream();            
             //set compression parameters
             ImageCodecInfo codec = getEncoderInfo("image/tiff");
             System.Drawing.Imaging.Encoder coder = System.Drawing.Imaging.Encoder.Compression;
@@ -73,6 +73,7 @@ namespace PaperCapture
             EncoderParameter par = new EncoderParameter(coder, (long)EncoderValue.CompressionCCITT4);
             pars.Param[0] = par;
             //image.Save(ms, System.Drawing.Imaging.ImageFormat.Tiff);
+            image.Save(@"C:\temp\newscantif.tif", codec, pars);
             image.Save(ms, codec, pars);
             byte[] bytes = ms.ToArray();
             WebRequest request = WebRequest.Create(url);
@@ -99,27 +100,25 @@ namespace PaperCapture
         /// 
         /// Subsequent pages pass in the document id. 
         /// 
-        /// pChannelInd  is "PO" - post
-        ///                 "FX" - fax
-        ///                 "PF" - portal fallout
+        /// pDeliveryInd is "Postal" - post
+        ///                 "Fax" - fax
+        ///                 "Portal" - portal fallout
         /// </summary>
         /// <param name="pDocID"></param>
         /// <param name="pImage"></param>
         /// <param name="pPaperSize"></param>
         /// <param name="pFormType"></param>
         /// <returns></returns>
-        internal static dynamic AddImageToDocument(int pDocID, Image pImage, string pPaperSize, string pFormType, string pChannelInd)
+        internal static dynamic AddImageToDocument(int pDocID, Image pImage, string pPaperSize, string pFormType)
         {
             try
             {
-                //MessageBox.Show("format " + pImage.RawFormat.ToString());
                 dynamic document;
                 string url = caseworkAPI + @"/forms/";
                 if (pDocID > 0)
                 { url = url + pDocID.ToString() + "/"; } //subsequent pages use a different route
-                url = url + pPaperSize + "?channel=" + pChannelInd;
-                if (pFormType != "") { url = url + "&type=" + pFormType; }
-                //caseworkAPI + @"/forms/" + pDocID.ToString() + "/" + pPaperSize, , "");               
+                url = url + pPaperSize;
+                if (pFormType != "") { url = url + "?type=" + pFormType; } //passing in form type bypasses the OCR process            
                 document = PostImage(url, pImage);
                 return document;
             }
@@ -131,7 +130,6 @@ namespace PaperCapture
 
         internal static string GetFormType(int documentID)
         {
-//            string url = caseworkAPI + @"/forms/" + documentID.ToString() + "/images/1/formtype";
             string url = caseworkAPI + @"/forms/" + documentID.ToString();
             dynamic formtype = Get(url);
             return formtype.type;
@@ -158,13 +156,14 @@ namespace PaperCapture
         }
 
 
-        internal static void CreateWorklistItem(int documentID, string formType, string workType)
+        internal static void CreateWorklistItem(int pDocumentID, string pFormType, string pWorkType, string pDelivery)
         {
             Dictionary<string, dynamic> data = new Dictionary<string, dynamic>();
-            data["application_type"] = formType;
+            data["application_type"] = pFormType;
             data["date_received"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-            data["document_id"] = documentID;
-            data["work_type"] = workType;
+            data["document_id"] = pDocumentID;
+            data["work_type"] = pWorkType;
+            data["delivery_method"] = pDelivery;
             data["application_data"] = "";
             string json = JsonConvert.SerializeObject(data);
             dynamic id = PostJSON(caseworkAPI + @"/applications", json);
@@ -174,7 +173,6 @@ namespace PaperCapture
         {
             // Get image codecs for all image formats
             ImageCodecInfo[] codecs = ImageCodecInfo.GetImageEncoders();
-
             // Find the correct image codec
             for (int i = 0; i < codecs.Length; i++)
                 if (codecs[i].MimeType == mimeType)

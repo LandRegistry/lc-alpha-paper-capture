@@ -12,6 +12,10 @@ namespace PaperCapture
 {
     public partial class frmScannedDocs : Form
     {
+        /// <summary>
+        /// This unit allows caseworkers to double check the images that have been scanned and make minor amendments before sending.
+        /// </summary>
+        /// <param name="pOwner"></param>
         public frmScannedDocs(ScanOptions pOwner)
         {
 
@@ -23,7 +27,7 @@ namespace PaperCapture
         private List<LCDoc> docBatch;
         private string workType;
         private string formTypeOverride;
-        private string channelInd;
+        private string deliveryInd;
         private bool showingPrev = false;
         private ImageList imgLst;
 
@@ -31,43 +35,50 @@ namespace PaperCapture
         /// Adds nodes to the tree view to allow the user to check before sending the batch
         /// </summary>
         /// <param name="pDocBatch">List of LCDoc objects</param>
-        public void buildTree(List<LCDoc> pDocBatch, string pWorkType, string pFormTypeOverride, string pChannelInd)
+        public void buildTree(List<LCDoc> pDocBatch, string pWorkType, string pFormTypeOverride, string pDeliveryInd)
         {
             this.workType = pWorkType;
             this.formTypeOverride = pFormTypeOverride;
-            this.channelInd = pChannelInd;
-            docBatch = pDocBatch;
+            this.deliveryInd = pDeliveryInd;         
+            this.docBatch = pDocBatch;
+            refreshTree();
+        }
+
+        private void refreshTree()
+        {
             trvwMain.Nodes.Clear();
-            trvwMain.ItemHeight = 32;
-            imgLst = new ImageList();
-            imgLst.ImageSize = new Size(32, 32);
-            imgLst.Images.Add(imgLstIcons.Images[0]);
-            foreach (LCDoc doc in docBatch)
-            {                
-                foreach (Image img in doc.ImgLst)
-                {
-                    imgLst.Images.Add(img);
-                }
-            }
-            int imgCtr = 0;
-            trvwMain.ImageList = imgLst;
-            foreach (LCDoc doc in docBatch)
+            if (docBatch.Count > 0)
             {
-                
-                TreeNode[] array = new TreeNode[doc.ImgLst.Count];
-                for (int i = 0; i < doc.ImgLst.Count;  i++)
-                { 
-                    TreeNode imgNode = new TreeNode((i+1).ToString(), imgCtr+1, imgCtr+1);
-                    array[i] = imgNode; 
+                trvwMain.ItemHeight = 32;
+                imgLst = new ImageList();
+                imgLst.ImageSize = new Size(32, 32);
+                imgLst.Images.Add(imgLstIcons.Images[0]);
+                foreach (LCDoc doc in docBatch)
+                {
+                    foreach (Image img in doc.ImgLst)
+                    {
+                        imgLst.Images.Add(img);
+                    }
                 }
+                int imgCtr = 0;
+                trvwMain.ImageList = imgLst;
+                foreach (LCDoc doc in docBatch)
+                {
 
-                TreeNode treeNode = new TreeNode(doc.SeqNo.ToString(), 0, 0, array);
-                trvwMain.Nodes.Add(treeNode);
-                imgCtr++;
+                    TreeNode[] array = new TreeNode[doc.ImgLst.Count];
+                    for (int i = 0; i < doc.ImgLst.Count; i++)
+                    {
+                        TreeNode imgNode = new TreeNode((i + 1).ToString(), imgCtr + 1, imgCtr + 1);
+                        array[i] = imgNode;
+                    }
+
+                    TreeNode treeNode = new TreeNode(doc.SeqNo.ToString(), 0, 0, array);
+                    trvwMain.Nodes.Add(treeNode);
+                    imgCtr++;
+                }
+                trvwMain.ExpandAll();
+                trvwMain.SelectedNode = trvwMain.Nodes[0].Nodes[0];
             }
-            trvwMain.ExpandAll();
-            trvwMain.SelectedNode = trvwMain.Nodes[0].Nodes[0];
-
         }
 
         /// <summary>
@@ -86,6 +97,10 @@ namespace PaperCapture
         /// </summary>
         private void showPage()
         {
+            if (docBatch.Count <= 0)
+            {
+                return;
+            }
             TreeNode node = trvwMain.SelectedNode;
             if (node.Parent == null) //try to move to the next image
             {
@@ -135,7 +150,14 @@ namespace PaperCapture
         /// <param name="e"></param>
         private void btnSend_Click(object sender, EventArgs e)
         {
-            sendBatch();
+            if (docBatch.Count > 0)
+            {
+                sendBatch();
+            }
+            else
+            {
+                MessageBox.Show("There are no documents to send");
+            }
         }
 
         /// <summary>
@@ -158,24 +180,20 @@ namespace PaperCapture
                     dynamic vDoc;
                     string formType = "";
                     foreach (Image image in doc.ImgLst)
-                    {                        
-                        vDoc = Requests.AddImageToDocument(id, image, doc.PaperSize, formTypeOverride, channelInd);
-                        if (formTypeOverride == "")
+                    {
+                        //pass id of 0 to indicate first page of a new document                        
+                        vDoc = Requests.AddImageToDocument(id, image, doc.PaperSize, formTypeOverride);
+                        if (id == 0)
                         {
-                            formType = vDoc.form_type.ToString();
-                        }
-                        else
-                        {
-                            formType = formTypeOverride;
-                        }
-                        id = vDoc.id;
-                        
+                            id = vDoc.id;
+                            formType = vDoc.form_type.ToString(); 
+                        }                                               
                         tsLblStatus.Text = "Sending Form " + (i+1).ToString() + " page " + (x + 1).ToString();
                         tsProgBr.PerformStep();
                         Application.DoEvents();
                         x++;
                     }
-                    Requests.CreateWorklistItem(id, formType, this.workType);
+                    Requests.CreateWorklistItem(id, formType, this.workType, this.deliveryInd);
                     this.parentFrm.LogMsg("Worklist item created: ID " + id.ToString() + " Type: " + formType + Environment.NewLine);                    
                     i ++;
                 }
@@ -260,6 +278,10 @@ namespace PaperCapture
         /// </summary>
         private void nextPage()
         {
+            if (docBatch.Count <= 0)
+            {
+                return;
+            }
             if (trvwMain.SelectedNode.NextVisibleNode != null)
             {
                 trvwMain.SelectedNode = trvwMain.SelectedNode.NextVisibleNode;
@@ -274,6 +296,10 @@ namespace PaperCapture
 
         private void prevPage()
         {
+            if (docBatch.Count <= 0)
+            {
+                return;
+            }
             showingPrev = true;
             if (trvwMain.SelectedNode.PrevVisibleNode != null)
             {
@@ -294,6 +320,10 @@ namespace PaperCapture
 
         private void rotatePage()
         {
+            if (docBatch.Count <= 0)
+            {
+                return;
+            }
             pbxImage.Image.RotateFlip(RotateFlipType.Rotate180FlipNone);
             showPage();
         }
@@ -344,6 +374,33 @@ namespace PaperCapture
             //work out whether this is an A4 or A3 document.            
             MessageBox.Show("Width: " + pImage.PhysicalDimension.Width + " height: " + pImage.PhysicalDimension.Height);
             return "A4";
+        }
+
+        private void tsbDelete_Click(object sender, EventArgs e)
+        {
+            if (docBatch.Count <= 0)
+            {
+                return;
+            }
+            TreeNode node = trvwMain.SelectedNode;
+            TreeNode parentNode = node.Parent;
+            tsslblDoc.Text = string.Format("Document {0} Page {1}", parentNode.Text, node.Text);
+            int docNo = Convert.ToInt32(parentNode.Text) - 1;
+            int pageNo = Convert.ToInt32(node.Text) - 1;
+            //remove the selected page
+            docBatch[docNo].ImgLst.RemoveAt(pageNo);        
+            if (docBatch[docNo].ImgLst.Count <= 0)
+            {
+                //if there are no other pages delete the document
+                docBatch.RemoveAt(docNo);
+            }
+            //resequence docBatch so the node names are correct upon refreshing the treeview
+            for (int i = 0; i <docBatch.Count; i++)
+            {
+                docBatch[i].SeqNo = i+1;
+            }
+            //rebuild the tree
+            refreshTree();
         }
 
   

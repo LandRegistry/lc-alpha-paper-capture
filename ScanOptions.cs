@@ -162,14 +162,14 @@ namespace PaperCapture
                         foreach (Image vImage in doc.ImgLst)
                         {
                             //pass id of 0 to indicate first page of a new document
-                            vDocInfo = Requests.AddImageToDocument(id, vImage, doc.PaperSize, formTypeOverride(""), getChannel());
+                            vDocInfo = Requests.AddImageToDocument(id, vImage, doc.PaperSize, formTypeOverride(""));
                             if (id == 0)
                             {
                                 id = vDocInfo.id;
                                 formType = vDocInfo.form_type.ToString(); // formTypeOverride(vDocInfo.form_type.ToString());
                             }
                         }
-                        Requests.CreateWorklistItem(id, formType, getWorkType(cmbxWorkList.Text));
+                        Requests.CreateWorklistItem(id, formType, getWorkType(cmbxWorkList.Text), getDelivery());
                         LogMsg("Item added to " + cmbxWorkList.Text + " Worklist (ID: " + id.ToString() + " Type: " + formType + ")");
                         tslblStatus.Text = formType + " " + id.ToString() + " sent to " + cmbxWorkList.Text;                        
                         Application.DoEvents();
@@ -183,7 +183,7 @@ namespace PaperCapture
                 else //display the batch
                 {
                     frmScannedDocs frm = new frmScannedDocs(this);
-                    frm.buildTree(DocBatch, getWorkType(cmbxWorkList.Text), formTypeOverride(""), getChannel());
+                    frm.buildTree(DocBatch, getWorkType(cmbxWorkList.Text), formTypeOverride(""), getDelivery());
                     frm.ShowDialog();
                 }
 
@@ -218,11 +218,14 @@ namespace PaperCapture
                     string formType = "";
                     foreach (Image vImage in doc.ImgLst)
                     {                        
-                        vDoc = Requests.AddImageToDocument(id, vImage, doc.PaperSize, formTypeOverride(""), getChannel());
-                        id = vDoc.id;
-                        formType = vDoc.form_type.ToString(); //formTypeOverride(vDoc.form_type.ToString());                        
+                        vDoc = Requests.AddImageToDocument(id, vImage, doc.PaperSize, formTypeOverride(""));
+                        if (id == 0)
+                        {
+                            id = vDoc.id;
+                            formType = vDoc.form_type.ToString(); //formTypeOverride(vDoc.form_type.ToString());                        
+                        }
                     }                    
-                    Requests.CreateWorklistItem(id, formType, getWorkType(cmbxWorkList.Text));
+                    Requests.CreateWorklistItem(id, formType, getWorkType(cmbxWorkList.Text), getDelivery());
                     tbxOutput.AppendText("Worklist item created: ID " + id.ToString() + " Type: " + formType + Environment.NewLine);
                 }
             }
@@ -442,10 +445,10 @@ namespace PaperCapture
                 foreach (Image img in doc.ImgLst)
                 {
                     //pass 0 in to indicate the first page of a new document
-                    id = Requests.AddImageToDocument(id, img, doc.PaperSize, formTypeOverride(""), getChannel());
+                    id = Requests.AddImageToDocument(id, img, doc.PaperSize, formTypeOverride(""));
                 }
                 string formType = formTypeOverride(Requests.GetFormType(id));                               
-                Requests.CreateWorklistItem(id, formType, getWorkType(cmbxWorkList.Text));
+                Requests.CreateWorklistItem(id, formType, getWorkType(cmbxWorkList.Text), getDelivery());
                 LogMsg("Worklist item created: ID " + id.ToString() + " Type: " + formType);
             }
         }
@@ -535,18 +538,18 @@ namespace PaperCapture
             writeRegistry("ShowLog", pShow.ToString());
         }
 
-        private string getChannel()
+        private string getDelivery()
         {
-            string channel = "PO"; //default to Postal
+            string delivery = "Postal"; //default to Postal
             if (rdbFax.Checked) 
             {
-                channel = "FX";
+                delivery = "Fax";
             }
             else if (rdbPortalFallout.Checked) 
             {
-                channel = "PF";
+                delivery = "Portal";
             }
-            return channel;
+            return delivery;
         }
 
     }

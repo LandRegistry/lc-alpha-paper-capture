@@ -44,6 +44,7 @@
             this.tsProgBr = new System.Windows.Forms.ToolStripProgressBar();
             this.tsLblStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.imgLstIcons = new System.Windows.Forms.ImageList(this.components);
+            this.tsbDelete = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.pbxImage)).BeginInit();
             this.toolStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
@@ -100,7 +101,8 @@
             this.tsbRotate,
             this.tsbPrev,
             this.tsbNext,
-            this.tsbPreview});
+            this.tsbPreview,
+            this.tsbDelete});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(813, 25);
@@ -156,7 +158,7 @@
             this.statusStrip1.Location = new System.Drawing.Point(0, 654);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(813, 23);
-            this.statusStrip1.TabIndex = 32;            
+            this.statusStrip1.TabIndex = 32;
             // 
             // tsslblDoc
             // 
@@ -180,6 +182,17 @@
             this.imgLstIcons.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imgLstIcons.ImageStream")));
             this.imgLstIcons.TransparentColor = System.Drawing.Color.Transparent;
             this.imgLstIcons.Images.SetKeyName(0, "699044-icon-55-document-text-128.png");
+            this.imgLstIcons.Images.SetKeyName(1, "trash.png");
+            // 
+            // tsbDelete
+            // 
+            this.tsbDelete.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.tsbDelete.Image = ((System.Drawing.Image)(resources.GetObject("tsbDelete.Image")));
+            this.tsbDelete.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsbDelete.Name = "tsbDelete";
+            this.tsbDelete.Size = new System.Drawing.Size(23, 22);
+            this.tsbDelete.Text = "Delete Page";
+            this.tsbDelete.Click += new System.EventHandler(this.tsbDelete_Click);
             // 
             // frmScannedDocs
             // 
@@ -222,5 +235,6 @@
         private System.Windows.Forms.ToolStripStatusLabel tsslblDoc;
         private System.Windows.Forms.ToolStripProgressBar tsProgBr;
         private System.Windows.Forms.ToolStripStatusLabel tsLblStatus;
+        private System.Windows.Forms.ToolStripButton tsbDelete;
     }
 }
