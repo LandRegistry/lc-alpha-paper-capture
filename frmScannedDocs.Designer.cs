@@ -39,12 +39,14 @@
             this.tsbPrev = new System.Windows.Forms.ToolStripButton();
             this.tsbNext = new System.Windows.Forms.ToolStripButton();
             this.tsbPreview = new System.Windows.Forms.ToolStripButton();
+            this.tsbDelete = new System.Windows.Forms.ToolStripButton();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.tsslblDoc = new System.Windows.Forms.ToolStripStatusLabel();
             this.tsProgBr = new System.Windows.Forms.ToolStripProgressBar();
             this.tsLblStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.imgLstIcons = new System.Windows.Forms.ImageList(this.components);
-            this.tsbDelete = new System.Windows.Forms.ToolStripButton();
+            this.btnScanMore = new System.Windows.Forms.Button();
+            this.lblBatchDetl = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.pbxImage)).BeginInit();
             this.toolStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
@@ -52,6 +54,7 @@
             // 
             // trvwMain
             // 
+            this.trvwMain.AllowDrop = true;
             this.trvwMain.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
                         | System.Windows.Forms.AnchorStyles.Left)));
             this.trvwMain.ItemHeight = 18;
@@ -59,7 +62,9 @@
             this.trvwMain.Name = "trvwMain";
             this.trvwMain.Size = new System.Drawing.Size(278, 568);
             this.trvwMain.TabIndex = 22;
+            this.trvwMain.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.trvwMain_ItemDrag);
             this.trvwMain.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.trvwMain_AfterSelect);
+            this.trvwMain.DragEnter += new System.Windows.Forms.DragEventHandler(this.trvwMain_DragEnter);
             // 
             // pbxImage
             // 
@@ -87,7 +92,7 @@
             // btnCancel
             // 
             this.btnCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCancel.Location = new System.Drawing.Point(584, 625);
+            this.btnCancel.Location = new System.Drawing.Point(477, 625);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(75, 23);
             this.btnCancel.TabIndex = 28;
@@ -149,6 +154,16 @@
             this.tsbPreview.Text = "toolStripButton4";
             this.tsbPreview.Click += new System.EventHandler(this.tsbPreview_Click);
             // 
+            // tsbDelete
+            // 
+            this.tsbDelete.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.tsbDelete.Image = ((System.Drawing.Image)(resources.GetObject("tsbDelete.Image")));
+            this.tsbDelete.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsbDelete.Name = "tsbDelete";
+            this.tsbDelete.Size = new System.Drawing.Size(23, 22);
+            this.tsbDelete.Text = "Delete Page";
+            this.tsbDelete.Click += new System.EventHandler(this.tsbDelete_Click);
+            // 
             // statusStrip1
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -184,21 +199,32 @@
             this.imgLstIcons.Images.SetKeyName(0, "699044-icon-55-document-text-128.png");
             this.imgLstIcons.Images.SetKeyName(1, "trash.png");
             // 
-            // tsbDelete
+            // btnScanMore
             // 
-            this.tsbDelete.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.tsbDelete.Image = ((System.Drawing.Image)(resources.GetObject("tsbDelete.Image")));
-            this.tsbDelete.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tsbDelete.Name = "tsbDelete";
-            this.tsbDelete.Size = new System.Drawing.Size(23, 22);
-            this.tsbDelete.Text = "Delete Page";
-            this.tsbDelete.Click += new System.EventHandler(this.tsbDelete_Click);
+            this.btnScanMore.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnScanMore.Location = new System.Drawing.Point(558, 625);
+            this.btnScanMore.Name = "btnScanMore";
+            this.btnScanMore.Size = new System.Drawing.Size(101, 23);
+            this.btnScanMore.TabIndex = 33;
+            this.btnScanMore.Text = "Scan More";
+            this.btnScanMore.UseVisualStyleBackColor = true;
+            this.btnScanMore.Click += new System.EventHandler(this.btnScanMore_Click);
+            // 
+            // lblBatchDetl
+            // 
+            this.lblBatchDetl.AutoSize = true;
+            this.lblBatchDetl.Location = new System.Drawing.Point(12, 31);
+            this.lblBatchDetl.Name = "lblBatchDetl";
+            this.lblBatchDetl.Size = new System.Drawing.Size(0, 17);
+            this.lblBatchDetl.TabIndex = 34;
             // 
             // frmScannedDocs
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(813, 677);
+            this.Controls.Add(this.lblBatchDetl);
+            this.Controls.Add(this.btnScanMore);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.btnCancel);
@@ -208,7 +234,6 @@
             this.Name = "frmScannedDocs";
             this.Text = "Scanned Documents";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
-            this.Load += new System.EventHandler(this.frmScannedDocs_Load);
             ((System.ComponentModel.ISupportInitialize)(this.pbxImage)).EndInit();
             this.toolStrip1.ResumeLayout(false);
             this.toolStrip1.PerformLayout();
@@ -236,5 +261,7 @@
         private System.Windows.Forms.ToolStripProgressBar tsProgBr;
         private System.Windows.Forms.ToolStripStatusLabel tsLblStatus;
         private System.Windows.Forms.ToolStripButton tsbDelete;
+        private System.Windows.Forms.Button btnScanMore;
+        private System.Windows.Forms.Label lblBatchDetl;
     }
 }

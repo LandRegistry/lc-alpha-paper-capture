@@ -31,10 +31,9 @@ namespace PaperCapture
 
         internal ScannerControl(int pNumPages, bool pTwoSided, bool pUseFlatbed, string pPaperSize)
         {
-            if (pPaperSize == "A3")
-            {
-                this.PAGESIZE = new SizeF(11.67f, 16.47f);
-            }
+            this.PAGESIZE = new SizeF(8.27f, 11.7f); //default to A4
+            if (pPaperSize == "A3") {this.PAGESIZE = new SizeF(11.67f, 16.47f);}
+            else if (pPaperSize == "A5") { this.PAGESIZE = new SizeF(5.83f, 8.27f); }
             this.numPages = pNumPages;
             this.twoSided = pTwoSided;
             this.useFlatbed = pUseFlatbed; //if not useflatbed then use doc feeder

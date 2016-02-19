@@ -21,6 +21,11 @@ namespace PaperCapture
 
             InitializeComponent();
             this.parentFrm = pOwner;
+            trvwMain.ItemDrag += new ItemDragEventHandler(trvwMain_ItemDrag);
+            trvwMain.DragEnter += new DragEventHandler(trvwMain_DragEnter);
+            trvwMain.DragOver += new DragEventHandler(trvwMain_DragOver);
+            trvwMain.DragDrop += new DragEventHandler(trvwMain_DragDrop);
+
         }
 
         private ScanOptions parentFrm;
@@ -39,7 +44,15 @@ namespace PaperCapture
         {
             this.workType = pWorkType;
             this.formTypeOverride = pFormTypeOverride;
-            this.deliveryInd = pDeliveryInd;         
+            this.deliveryInd = pDeliveryInd;
+            if (pFormTypeOverride != "")
+            {
+                lblBatchDetl.Text = pWorkType.ToUpper() + " | " + pFormTypeOverride + " | " + pDeliveryInd;
+            }
+            else
+            {
+                lblBatchDetl.Text = pWorkType.ToUpper() + " | " + pDeliveryInd;
+            }
             this.docBatch = pDocBatch;
             refreshTree();
         }
@@ -87,7 +100,7 @@ namespace PaperCapture
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void trvwMain_AfterSelect(object sender, TreeViewEventArgs e)
-        {      
+        {
             showPage();
             showingPrev = false;
         }
@@ -120,7 +133,7 @@ namespace PaperCapture
                 }
             }
             if (node != null)
-            {            
+            {
                 if (node.Parent != null) //we are on an image
                 {
                     TreeNode parentNode = node.Parent;
@@ -173,7 +186,7 @@ namespace PaperCapture
                 int i = 0;
                 foreach (LCDoc doc in docBatch)
                 {
-                    tsLblStatus.Text = "Sending Form " + (i+1).ToString();
+                    tsLblStatus.Text = "Sending Form " + (i + 1).ToString();
                     Application.DoEvents();
                     int id = 0; // Requests.CreateDocument();
                     int x = 0;
@@ -181,21 +194,23 @@ namespace PaperCapture
                     string formType = "";
                     foreach (Image image in doc.ImgLst)
                     {
+                        //detect paper size as various sizes could have beendragged together
+                        string paperSize = getPaperSize(image);
                         //pass id of 0 to indicate first page of a new document                        
-                        vDoc = Requests.AddImageToDocument(id, image, doc.PaperSize, formTypeOverride);
+                        vDoc = Requests.AddImageToDocument(id, image, paperSize, formTypeOverride);
                         if (id == 0)
                         {
                             id = vDoc.id;
-                            formType = vDoc.form_type.ToString(); 
-                        }                                               
-                        tsLblStatus.Text = "Sending Form " + (i+1).ToString() + " page " + (x + 1).ToString();
+                            formType = vDoc.form_type.ToString();
+                        }
+                        tsLblStatus.Text = "Sending Form " + (i + 1).ToString() + " page " + (x + 1).ToString();
                         tsProgBr.PerformStep();
                         Application.DoEvents();
                         x++;
                     }
                     Requests.CreateWorklistItem(id, formType, this.workType, this.deliveryInd);
-                    this.parentFrm.LogMsg("Worklist item created: ID " + id.ToString() + " Type: " + formType + Environment.NewLine);                    
-                    i ++;
+                    this.parentFrm.LogMsg("Worklist item created: ID " + id.ToString() + " Type: " + formType + Environment.NewLine);
+                    i++;
                 }
                 tsLblStatus.Text = "Transfer Complete ";
             }
@@ -212,10 +227,22 @@ namespace PaperCapture
                     this.parentFrm.showAndLog("An Error Occured: " + exp.Message);
                 }
             }
+            this.parentFrm.ContinueScanning(false, docBatch);
             Close();
         }
 
-    
+        private string getPaperSize(Image pImg)
+        {
+            //float imageHeightPrint = pImg.Height / pImg.VerticalResolution * 100;
+            float imageWidthPrint = pImg.Width / pImg.HorizontalResolution * 100;
+            string paperSize = "A4";
+            if (imageWidthPrint < 900)
+                paperSize = "A5";
+            else if (imageWidthPrint > 1350)
+                paperSize = "A3";
+            return paperSize;
+        }
+
         /// <summary>
         /// Displays the images associated with the selected node int he picture box.
         /// </summary>
@@ -235,7 +262,7 @@ namespace PaperCapture
             }
         }
 
-        
+
         private void tsbPreview_Click(object sender, EventArgs e)
         {
             viewPage();
@@ -308,16 +335,6 @@ namespace PaperCapture
             trvwMain.Focus();
         }
 
-        private void pbxPreview_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void toolStripButton1_Click(object sender, EventArgs e)
-        {
-           
-        }
-
         private void rotatePage()
         {
             if (docBatch.Count <= 0)
@@ -326,16 +343,6 @@ namespace PaperCapture
             }
             pbxImage.Image.RotateFlip(RotateFlipType.Rotate180FlipNone);
             showPage();
-        }
-
-        private void toolStripButton2_Click(object sender, EventArgs e)
-        {
-           
-        }
-
-        private void toolStripButton3_Click(object sender, EventArgs e)
-        {
-           
         }
 
         private void tsbNext_Click(object sender, EventArgs e)
@@ -353,28 +360,12 @@ namespace PaperCapture
             rotatePage();
         }
 
-        private void lblImageDetl_Click(object sender, EventArgs e)
-        {
-
-        }
-
         private void btnCancel_Click_1(object sender, EventArgs e)
         {
             this.parentFrm.LogMsg("Sending documents was cancelled");
             Close();
         }
-
-        private void frmScannedDocs_Load(object sender, EventArgs e)
-        {
-
-        }
-
-        private string getPaperSize(Image pImage)
-        {
-            //work out whether this is an A4 or A3 document.            
-            MessageBox.Show("Width: " + pImage.PhysicalDimension.Width + " height: " + pImage.PhysicalDimension.Height);
-            return "A4";
-        }
+           
 
         private void tsbDelete_Click(object sender, EventArgs e)
         {
@@ -388,23 +379,170 @@ namespace PaperCapture
             int docNo = Convert.ToInt32(parentNode.Text) - 1;
             int pageNo = Convert.ToInt32(node.Text) - 1;
             //remove the selected page
-            docBatch[docNo].ImgLst.RemoveAt(pageNo);        
+            docBatch[docNo].ImgLst.RemoveAt(pageNo);
             if (docBatch[docNo].ImgLst.Count <= 0)
             {
                 //if there are no other pages delete the document
                 docBatch.RemoveAt(docNo);
             }
             //resequence docBatch so the node names are correct upon refreshing the treeview
-            for (int i = 0; i <docBatch.Count; i++)
+            for (int i = 0; i < docBatch.Count; i++)
             {
-                docBatch[i].SeqNo = i+1;
+                docBatch[i].SeqNo = i + 1;
             }
             //rebuild the tree
             refreshTree();
         }
 
-  
+        private void trvwMain_ItemDrag(object sender, ItemDragEventArgs e)
+        {
+            DoDragDrop(e.Item, DragDropEffects.Move);
+        }
 
-       
+        private void trvwMain_DragEnter(object sender, DragEventArgs e)
+        {
+            e.Effect = DragDropEffects.Move;
+        }
+
+        // Select the node under the mouse pointer to indicate the 
+        // expected drop location.
+        private void trvwMain_DragOver(object sender, DragEventArgs e)
+        {
+            // Retrieve the client coordinates of the mouse position.
+            Point targetPoint = trvwMain.PointToClient(new Point(e.X, e.Y));
+
+            // Select the node at the mouse position.
+            trvwMain.SelectedNode = trvwMain.GetNodeAt(targetPoint);
+        }
+
+        private void trvwMain_DragDrop(object sender, DragEventArgs e)
+        {
+
+            // Retrieve the client coordinates of the drop location.
+            Point targetPoint = trvwMain.PointToClient(new Point(e.X, e.Y));
+
+            // Retrieve the node at the drop location.
+            TreeNode targetNode = trvwMain.GetNodeAt(targetPoint);
+
+            // Retrieve the node that was dragged.
+            TreeNode draggedNode = (TreeNode)e.Data.GetData(typeof(TreeNode));
+
+            //break if target node create new doc   
+            if (targetNode == null)
+            {
+                //TODO create new document in tree
+                return;
+            }
+            int draggedDocNo = Convert.ToInt32(draggedNode.Parent.Text) - 1;
+            int draggedPageNo = Convert.ToInt32(draggedNode.Text) - 1;
+
+            int targetDocNo;
+            int targetPageNo;
+            if (targetNode.Parent != null)//they dragged on to a page node
+            {
+                targetDocNo = Convert.ToInt32(targetNode.Parent.Text) - 1;
+                targetPageNo = Convert.ToInt32(targetNode.Text) -1;
+            }
+            else //they dragged on to a document node
+            {
+                targetDocNo = Convert.ToInt32(targetNode.Text) - 1;
+                //work out the last page
+                targetPageNo = Convert.ToInt32(targetNode.Nodes.Count-1);
+            }
+
+            if ((draggedDocNo == targetDocNo))
+            {
+                MessageBox.Show("Dragged on to the same document (" + draggedDocNo.ToString() + "). move page " + draggedPageNo.ToString() + " to be page " + targetPageNo.ToString());
+                MoveElement(docBatch[targetDocNo].ImgLst, draggedPageNo, targetPageNo);
+                refreshTree();
+                return;
+            }
+           
+            // Confirm that the node at the drop location is not 
+            // the dragged node or a descendant of the dragged node.
+            if (!draggedNode.Equals(targetNode) && !ContainsNode(draggedNode, targetNode))
+            {
+                // If it is a move operation, remove the node from its current 
+                // location and add it to the node at the drop location.
+                if (e.Effect == DragDropEffects.Move)
+                {
+                    draggedNode.Remove();
+                    if (targetNode.Parent != null)
+                        targetNode = targetNode.Parent;
+                    
+                    //move the data 
+                    Image img = docBatch[draggedDocNo].ImgLst[draggedPageNo];
+                    MessageBox.Show("insert into doc " + targetDocNo.ToString() + " page number " + targetPageNo.ToString());
+                    docBatch[targetDocNo].ImgLst.Insert(targetPageNo, img);
+                    MessageBox.Show("remove from doc " + draggedDocNo.ToString() + " page number " + draggedPageNo.ToString());
+                    docBatch[draggedDocNo].ImgLst.RemoveAt(draggedPageNo);
+                    //targetNode.Nodes.Add(draggedNode);
+
+                    if (docBatch[draggedDocNo].ImgLst.Count <= 0)
+                    {                       
+                        docBatch.RemoveAt(draggedDocNo); //if there are no other pages delete the document
+                    }
+
+                    //resequence docBatch so the node names are correct upon refreshing the treeview
+                    for (int i = 0; i < docBatch.Count; i++)
+                    {
+                        docBatch[i].SeqNo = i + 1;
+                    }
+                    //rebuild the tree
+                    refreshTree(); 
+                    this.parentFrm.LogMsg("doc no " + (draggedDocNo + 1).ToString() + " page no " + (draggedPageNo + 1).ToString() +
+                    " to doc no" + (targetDocNo + 1).ToString() + " page no " + (targetPageNo + 1).ToString());
+                }
+            }
+        }
+
+        // Determine whether one node is a parent 
+        // or ancestor of a second node.
+        private bool ContainsNode(TreeNode node1, TreeNode node2)
+        {
+            // Check the parent node of the second node.
+            if (node2.Parent == null) return false;
+            if (node2.Parent.Equals(node1)) return true;
+
+            // If the parent node is not null or equal to the first node, 
+            // call the ContainsNode method recursively using the parent of 
+            // the second node.
+            return ContainsNode(node1, node2.Parent);
+        }
+
+        public static void MoveElement(List<Image> list, int fromIndex, int toIndex)
+        {
+            if ((fromIndex < 0) || (fromIndex >= list.Count))
+            {
+                throw new ArgumentException("From index is invalid");
+            }
+            if ((toIndex < 0) || (toIndex >= list.Count))
+            {
+                throw new ArgumentException("To index is invalid");
+            }
+
+            if (fromIndex == toIndex) return;
+
+            var element = list[fromIndex];
+
+            if (fromIndex > toIndex)
+            {
+                list.RemoveAt(fromIndex);
+                list.Insert(toIndex, element);
+            }
+            else
+            {
+                list.Insert(toIndex + 1, element);
+                list.RemoveAt(fromIndex);
+            }
+        }
+
+        private void btnScanMore_Click(object sender, EventArgs e)
+        {
+            this.parentFrm.LogMsg("Scan More documents");
+            this.parentFrm.ContinueScanning(true, docBatch);
+            Close();
+        }   
+
     }
 }

@@ -24,6 +24,7 @@ namespace PaperCapture
             InitializeComponent();
             cmbxWorkList.SelectedIndex = 0;
             cmbxFormType.SelectedIndex = 0;
+            cmbxPaperSize.SelectedIndex = 1;
             string scnrNam = "";
             try
             {
@@ -70,6 +71,8 @@ namespace PaperCapture
 
         private List<LCDoc> DocBatch; //holds the batch of documents
 
+        private bool appendScans = false;
+
         /// <summary>
         /// Kick off the scanning process according to the user inputs.
         /// </summary>
@@ -102,8 +105,7 @@ namespace PaperCapture
                 }
                 else
                 {
-                    string vPaperSize = "A4";
-                    if (cbxA3.Checked) {vPaperSize = "A3";}                    
+                    string vPaperSize = cmbxPaperSize.Text;                                        
                     ScannerControl control = new ScannerControl(vPagesPerAppn, cbxTwoSides.Checked, cmbxSource.SelectedIndex == 1, vPaperSize);
                     images = scanDocs(control, vTotalAppns);
                 }
@@ -133,7 +135,10 @@ namespace PaperCapture
                     }
                 }
                 //build batch
-                DocBatch = new List<LCDoc>();
+                if (!appendScans)
+                {
+                    DocBatch = new List<LCDoc>();                 
+                }
                 int imgLstCtr = 0;
                 tsProg.Maximum = vAmountOfAppns;
                 tsProg.Step = 1;
@@ -141,9 +146,8 @@ namespace PaperCapture
                 {
                     //for each document, create a Doc object and add the correct amount of page images
                     LCDoc vDoc = new LCDoc();
-                    vDoc.SeqNo = i;
-                    vDoc.PaperSize = "A4";
-                    if (cbxA3.Checked) { vDoc.PaperSize = "A3"; }
+                    vDoc.SeqNo = DocBatch.Count+1;                    
+                    vDoc.PaperSize = cmbxPaperSize.Text;                     
                     for (int x = 0; x < vPagesPerAppn; x++)
                     {
                         vDoc.ImgLst.Add(images[imgLstCtr]);
@@ -178,7 +182,9 @@ namespace PaperCapture
                         string msg = " " + formType + " sent to " + cmbxWorkList.Text; 
                         tslblStatus.Text = msg;
                         Application.DoEvents();
+
                     }
+                    ContinueScanning(false, DocBatch);
                 }
                 else //display the batch
                 {
@@ -483,13 +489,6 @@ namespace PaperCapture
             return vVal;
         }
 
-        //private string getPaperSize(Image pImage)
-        //{
-        //    //work out whether this is an A4 or A3 document.            
-        //    MessageBox.Show("Width: " + pImage.PhysicalDimension.Width + " height: " + pImage.PhysicalDimension.Height);
-        //    return "A4";
-        //}
-
         private string getWorkType(string pWrkType)
         {
             string res = pWrkType;
@@ -550,6 +549,25 @@ namespace PaperCapture
                 delivery = "Portal";
             }
             return delivery;
+        }
+
+        public void ContinueScanning(bool pContinue, List<LCDoc> pDocBatch)
+        {
+            if (pContinue)
+            {
+                DocBatch = pDocBatch;
+            }
+            else
+            {
+                DocBatch.Clear();
+            }
+            appendScans = pContinue;
+            cmbxWorkList.Enabled = !pContinue;
+            cmbxFormType.Enabled = !pContinue;
+            lblRecievedBy.Enabled = !pContinue;
+            rdbPost.Enabled = !pContinue;
+            rdbFax.Enabled = !pContinue;
+            rdbPortalFallout.Enabled = !pContinue;
         }
 
     }

@@ -36,6 +36,12 @@
             this.label1 = new System.Windows.Forms.Label();
             this.tbxOutput = new System.Windows.Forms.RichTextBox();
             this.grpbxFrmDtls = new System.Windows.Forms.GroupBox();
+            this.lblRecievedBy = new System.Windows.Forms.Label();
+            this.rdbPortalFallout = new System.Windows.Forms.RadioButton();
+            this.rdbFax = new System.Windows.Forms.RadioButton();
+            this.rdbPost = new System.Windows.Forms.RadioButton();
+            this.cmbxFormType = new System.Windows.Forms.ComboBox();
+            this.lblFormType = new System.Windows.Forms.Label();
             this.cmbxWorkList = new System.Windows.Forms.ComboBox();
             this.lblAppnType = new System.Windows.Forms.Label();
             this.lblFormsToScan = new System.Windows.Forms.Label();
@@ -48,18 +54,12 @@
             this.cbxScanAndSend = new System.Windows.Forms.CheckBox();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.tsProg = new System.Windows.Forms.ToolStripProgressBar();
-            this.cbxA3 = new System.Windows.Forms.CheckBox();
-            this.cmbxFormType = new System.Windows.Forms.ComboBox();
-            this.lblFormType = new System.Windows.Forms.Label();
-            this.gbpScanOptions = new System.Windows.Forms.GroupBox();
             this.tslblStatus = new System.Windows.Forms.ToolStripStatusLabel();
+            this.gbpScanOptions = new System.Windows.Forms.GroupBox();
             this.pbxShowLog = new System.Windows.Forms.PictureBox();
             this.imglstMain = new System.Windows.Forms.ImageList(this.components);
             this.gpbxLog = new System.Windows.Forms.GroupBox();
-            this.rdbPost = new System.Windows.Forms.RadioButton();
-            this.rdbFax = new System.Windows.Forms.RadioButton();
-            this.rdbPortalFallout = new System.Windows.Forms.RadioButton();
-            this.lblRecievedBy = new System.Windows.Forms.Label();
+            this.cmbxPaperSize = new System.Windows.Forms.ComboBox();
             ((System.ComponentModel.ISupportInitialize)(this.numPagesInput)).BeginInit();
             this.grpbxFrmDtls.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numDocsInput)).BeginInit();
@@ -145,6 +145,88 @@
             this.grpbxFrmDtls.TabIndex = 6;
             this.grpbxFrmDtls.TabStop = false;
             this.grpbxFrmDtls.Text = "Form Details";
+            // 
+            // lblRecievedBy
+            // 
+            this.lblRecievedBy.AutoSize = true;
+            this.lblRecievedBy.Location = new System.Drawing.Point(21, 103);
+            this.lblRecievedBy.Name = "lblRecievedBy";
+            this.lblRecievedBy.Size = new System.Drawing.Size(91, 17);
+            this.lblRecievedBy.TabIndex = 7;
+            this.lblRecievedBy.Text = "Recieved By:";
+            // 
+            // rdbPortalFallout
+            // 
+            this.rdbPortalFallout.AutoSize = true;
+            this.rdbPortalFallout.Location = new System.Drawing.Point(320, 103);
+            this.rdbPortalFallout.Name = "rdbPortalFallout";
+            this.rdbPortalFallout.Size = new System.Drawing.Size(112, 21);
+            this.rdbPortalFallout.TabIndex = 6;
+            this.rdbPortalFallout.Text = "Portal Fallout";
+            this.rdbPortalFallout.UseVisualStyleBackColor = true;
+            // 
+            // rdbFax
+            // 
+            this.rdbFax.AutoSize = true;
+            this.rdbFax.Location = new System.Drawing.Point(225, 103);
+            this.rdbFax.Name = "rdbFax";
+            this.rdbFax.Size = new System.Drawing.Size(51, 21);
+            this.rdbFax.TabIndex = 5;
+            this.rdbFax.Text = "Fax";
+            this.rdbFax.UseVisualStyleBackColor = true;
+            // 
+            // rdbPost
+            // 
+            this.rdbPost.AutoSize = true;
+            this.rdbPost.Checked = true;
+            this.rdbPost.Location = new System.Drawing.Point(121, 103);
+            this.rdbPost.Name = "rdbPost";
+            this.rdbPost.Size = new System.Drawing.Size(57, 21);
+            this.rdbPost.TabIndex = 4;
+            this.rdbPost.TabStop = true;
+            this.rdbPost.Text = "Post";
+            this.rdbPost.UseVisualStyleBackColor = true;
+            // 
+            // cmbxFormType
+            // 
+            this.cmbxFormType.FormattingEnabled = true;
+            this.cmbxFormType.Items.AddRange(new object[] {
+            "Auto Detect",
+            "K1",
+            "K2",
+            "K4",
+            "K3",
+            "K6",
+            "K7",
+            "K8",
+            "K9",
+            "K10",
+            "K11",
+            "K12",
+            "K13",
+            "K15",
+            "K16",
+            "K19",
+            "K20",
+            "PA(B)",
+            "PA(B) Amend",
+            "WO(B)",
+            "WO(B) Amend",
+            "Unknown"});
+            this.cmbxFormType.Location = new System.Drawing.Point(121, 66);
+            this.cmbxFormType.Name = "cmbxFormType";
+            this.cmbxFormType.Size = new System.Drawing.Size(311, 24);
+            this.cmbxFormType.TabIndex = 2;
+            this.toolTip1.SetToolTip(this.cmbxFormType, "Specify the form type or let the system automatically detect it");
+            // 
+            // lblFormType
+            // 
+            this.lblFormType.AutoSize = true;
+            this.lblFormType.Location = new System.Drawing.Point(21, 69);
+            this.lblFormType.Name = "lblFormType";
+            this.lblFormType.Size = new System.Drawing.Size(80, 17);
+            this.lblFormType.TabIndex = 3;
+            this.lblFormType.Text = "Form Type:";
             // 
             // cmbxWorkList
             // 
@@ -273,61 +355,17 @@
             this.tsProg.Name = "tsProg";
             this.tsProg.Size = new System.Drawing.Size(200, 16);
             // 
-            // cbxA3
+            // tslblStatus
             // 
-            this.cbxA3.AutoSize = true;
-            this.cbxA3.Location = new System.Drawing.Point(435, 85);
-            this.cbxA3.Name = "cbxA3";
-            this.cbxA3.Size = new System.Drawing.Size(47, 21);
-            this.cbxA3.TabIndex = 19;
-            this.cbxA3.Text = "A3";
-            this.cbxA3.UseVisualStyleBackColor = true;
-            // 
-            // cmbxFormType
-            // 
-            this.cmbxFormType.FormattingEnabled = true;
-            this.cmbxFormType.Items.AddRange(new object[] {
-            "Auto Detect",
-            "K1",
-            "K2",
-            "K4",
-            "K3",
-            "K6",
-            "K7",
-            "K8",
-            "K9",
-            "K10",
-            "K11",
-            "K12",
-            "K13",
-            "K15",
-            "K16",
-            "K19",
-            "K20",
-            "PA(B)",
-            "PA(B) Amend",
-            "WO(B)",
-            "WO(B) Amend",
-            "Unknown"});
-            this.cmbxFormType.Location = new System.Drawing.Point(121, 66);
-            this.cmbxFormType.Name = "cmbxFormType";
-            this.cmbxFormType.Size = new System.Drawing.Size(311, 24);
-            this.cmbxFormType.TabIndex = 2;
-            this.toolTip1.SetToolTip(this.cmbxFormType, "Specify the form type or let the system automatically detect it");
-            // 
-            // lblFormType
-            // 
-            this.lblFormType.AutoSize = true;
-            this.lblFormType.Location = new System.Drawing.Point(21, 69);
-            this.lblFormType.Name = "lblFormType";
-            this.lblFormType.Size = new System.Drawing.Size(80, 17);
-            this.lblFormType.TabIndex = 3;
-            this.lblFormType.Text = "Form Type:";
+            this.tslblStatus.Font = new System.Drawing.Font("Tahoma", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.tslblStatus.Name = "tslblStatus";
+            this.tslblStatus.Size = new System.Drawing.Size(47, 17);
+            this.tslblStatus.Text = "Ready";
             // 
             // gbpScanOptions
             // 
+            this.gbpScanOptions.Controls.Add(this.cmbxPaperSize);
             this.gbpScanOptions.Controls.Add(this.cmbxSource);
-            this.gbpScanOptions.Controls.Add(this.cbxA3);
             this.gbpScanOptions.Controls.Add(this.label3);
             this.gbpScanOptions.Controls.Add(this.label1);
             this.gbpScanOptions.Controls.Add(this.cbxScanAndSend);
@@ -343,13 +381,6 @@
             this.gbpScanOptions.TabIndex = 20;
             this.gbpScanOptions.TabStop = false;
             this.gbpScanOptions.Text = "Scanning Options";
-            // 
-            // tslblStatus
-            // 
-            this.tslblStatus.Font = new System.Drawing.Font("Tahoma", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tslblStatus.Name = "tslblStatus";
-            this.tslblStatus.Size = new System.Drawing.Size(47, 17);
-            this.tslblStatus.Text = "Ready";
             // 
             // pbxShowLog
             // 
@@ -378,46 +409,17 @@
             this.gpbxLog.TabStop = false;
             this.gpbxLog.Text = "Log";
             // 
-            // rdbPost
+            // cmbxPaperSize
             // 
-            this.rdbPost.AutoSize = true;
-            this.rdbPost.Checked = true;
-            this.rdbPost.Location = new System.Drawing.Point(121, 103);
-            this.rdbPost.Name = "rdbPost";
-            this.rdbPost.Size = new System.Drawing.Size(57, 21);
-            this.rdbPost.TabIndex = 4;
-            this.rdbPost.TabStop = true;
-            this.rdbPost.Text = "Post";
-            this.rdbPost.UseVisualStyleBackColor = true;
-            // 
-            // rdbFax
-            // 
-            this.rdbFax.AutoSize = true;
-            this.rdbFax.Location = new System.Drawing.Point(225, 103);
-            this.rdbFax.Name = "rdbFax";
-            this.rdbFax.Size = new System.Drawing.Size(51, 21);
-            this.rdbFax.TabIndex = 5;
-            this.rdbFax.Text = "Fax";
-            this.rdbFax.UseVisualStyleBackColor = true;
-            // 
-            // rdbPortalFallout
-            // 
-            this.rdbPortalFallout.AutoSize = true;
-            this.rdbPortalFallout.Location = new System.Drawing.Point(320, 103);
-            this.rdbPortalFallout.Name = "rdbPortalFallout";
-            this.rdbPortalFallout.Size = new System.Drawing.Size(112, 21);
-            this.rdbPortalFallout.TabIndex = 6;
-            this.rdbPortalFallout.Text = "Portal Fallout";
-            this.rdbPortalFallout.UseVisualStyleBackColor = true;
-            // 
-            // lblRecievedBy
-            // 
-            this.lblRecievedBy.AutoSize = true;
-            this.lblRecievedBy.Location = new System.Drawing.Point(21, 103);
-            this.lblRecievedBy.Name = "lblRecievedBy";
-            this.lblRecievedBy.Size = new System.Drawing.Size(91, 17);
-            this.lblRecievedBy.TabIndex = 7;
-            this.lblRecievedBy.Text = "Recieved By:";
+            this.cmbxPaperSize.FormattingEnabled = true;
+            this.cmbxPaperSize.Items.AddRange(new object[] {
+            "A3",
+            "A4",
+            "A5"});
+            this.cmbxPaperSize.Location = new System.Drawing.Point(448, 81);
+            this.cmbxPaperSize.Name = "cmbxPaperSize";
+            this.cmbxPaperSize.Size = new System.Drawing.Size(82, 24);
+            this.cmbxPaperSize.TabIndex = 18;
             // 
             // ScanOptions
             // 
@@ -466,7 +468,6 @@
         private System.Windows.Forms.CheckBox cbxScanAndSend;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripProgressBar tsProg;
-        private System.Windows.Forms.CheckBox cbxA3;
         private System.Windows.Forms.ComboBox cmbxFormType;
         private System.Windows.Forms.Label lblFormType;
         private System.Windows.Forms.GroupBox gbpScanOptions;
@@ -478,6 +479,7 @@
         private System.Windows.Forms.RadioButton rdbFax;
         private System.Windows.Forms.RadioButton rdbPost;
         private System.Windows.Forms.Label lblRecievedBy;
+        private System.Windows.Forms.ComboBox cmbxPaperSize;
     }
 }
 

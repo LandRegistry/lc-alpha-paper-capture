@@ -18,6 +18,7 @@ namespace PaperCapture
         {
             try
             {
+                ctr = 0;
                 WebRequest request = WebRequest.Create(url);
                 request.Method = "POST";
                 byte[] bytes = System.Text.Encoding.UTF8.GetBytes(data);
@@ -44,7 +45,7 @@ namespace PaperCapture
             }
         }
 
-     
+        private static int ctr;
 
         private static dynamic Get(string url)
         {
@@ -73,7 +74,8 @@ namespace PaperCapture
             EncoderParameter par = new EncoderParameter(coder, (long)EncoderValue.CompressionCCITT4);
             pars.Param[0] = par;
             //image.Save(ms, System.Drawing.Imaging.ImageFormat.Tiff);
-            image.Save(@"C:\temp\newscantif.tif", codec, pars);
+            ctr++;
+            image.Save(@"C:\temp\newscantif" + ctr.ToString() + ".tif", codec, pars);
             image.Save(ms, codec, pars);
             byte[] bytes = ms.ToArray();
             WebRequest request = WebRequest.Create(url);
