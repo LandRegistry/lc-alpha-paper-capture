@@ -14,6 +14,7 @@ using Newtonsoft.Json;
 using System.Windows.Media.Imaging;
 using WIA;
 using Microsoft.Win32;
+using System.Drawing.Imaging;
 
 namespace PaperCapture
 {
@@ -28,7 +29,7 @@ namespace PaperCapture
             string scnrNam = "";
             try
             {
-                ScannerControl scnCtrl = new ScannerControl(0, false, false, "A4");
+                ScannerControl scnCtrl = new ScannerControl(0, false, false, cmbxPaperSize.Text, !cbxColour.Checked);
                 scnrNam = scnCtrl.GetScannerName();
                 LogMsg("Scanner Detected: " + scnrNam);
             }
@@ -54,7 +55,7 @@ namespace PaperCapture
                     LogMsg("ShowLog value is invalid in the registry. Should be true or false");
                 }
             }
-            
+
             val = readRegistry("ScanAndSend");
             if (val != "")
             {
@@ -105,8 +106,7 @@ namespace PaperCapture
                 }
                 else
                 {
-                    string vPaperSize = cmbxPaperSize.Text;                                        
-                    ScannerControl control = new ScannerControl(vPagesPerAppn, cbxTwoSides.Checked, cmbxSource.SelectedIndex == 1, vPaperSize);
+                    ScannerControl control = new ScannerControl(vPagesPerAppn, cbxTwoSides.Checked, cmbxSource.SelectedIndex == 1, cmbxPaperSize.Text, !cbxColour.Checked);
                     images = scanDocs(control, vTotalAppns);
                 }
 
@@ -137,7 +137,7 @@ namespace PaperCapture
                 //build batch
                 if (!appendScans)
                 {
-                    DocBatch = new List<LCDoc>();                 
+                    DocBatch = new List<LCDoc>();
                 }
                 int imgLstCtr = 0;
                 tsProg.Maximum = vAmountOfAppns;
@@ -146,14 +146,14 @@ namespace PaperCapture
                 {
                     //for each document, create a Doc object and add the correct amount of page images
                     LCDoc vDoc = new LCDoc();
-                    vDoc.SeqNo = DocBatch.Count+1;                    
-                    vDoc.PaperSize = cmbxPaperSize.Text;                     
+                    vDoc.SeqNo = DocBatch.Count + 1;
+                    vDoc.PaperSize = cmbxPaperSize.Text;
                     for (int x = 0; x < vPagesPerAppn; x++)
                     {
                         vDoc.ImgLst.Add(images[imgLstCtr]);
                         imgLstCtr++;
                     }
-                    DocBatch.Add(vDoc);                    
+                    DocBatch.Add(vDoc);
                 }
                 if (cbxScanAndSend.Checked) //scan and send 
                 {
@@ -175,11 +175,11 @@ namespace PaperCapture
                         }
                         Requests.CreateWorklistItem(id, formType, getWorkType(cmbxWorkList.Text), getDelivery());
                         LogMsg("Item added to " + cmbxWorkList.Text + " Worklist (ID: " + id.ToString() + " Type: " + formType + ")");
-                        tslblStatus.Text = formType + " " + id.ToString() + " sent to " + cmbxWorkList.Text;                        
+                        tslblStatus.Text = formType + " " + id.ToString() + " sent to " + cmbxWorkList.Text;
                         Application.DoEvents();
                         tsProg.PerformStep();
                         Application.DoEvents();
-                        string msg = " " + formType + " sent to " + cmbxWorkList.Text; 
+                        string msg = " " + formType + " sent to " + cmbxWorkList.Text;
                         tslblStatus.Text = msg;
                         Application.DoEvents();
 
@@ -189,7 +189,7 @@ namespace PaperCapture
                 else //display the batch
                 {
                     frmScannedDocs frm = new frmScannedDocs(this);
-                    frm.buildTree(DocBatch, getWorkType(cmbxWorkList.Text), formTypeOverride(""), getDelivery());
+                    frm.buildTree(DocBatch, getWorkType(cmbxWorkList.Text), formTypeOverride(""), getDelivery(), !cbxColour.Checked);
                     frm.ShowDialog();
                 }
 
@@ -223,14 +223,14 @@ namespace PaperCapture
                     dynamic vDoc;
                     string formType = "";
                     foreach (Image vImage in doc.ImgLst)
-                    {                        
+                    {
                         vDoc = Requests.AddImageToDocument(id, vImage, doc.PaperSize, formTypeOverride(""));
                         if (id == 0)
                         {
                             id = vDoc.id;
                             formType = vDoc.form_type.ToString(); //formTypeOverride(vDoc.form_type.ToString());                        
                         }
-                    }                    
+                    }
                     Requests.CreateWorklistItem(id, formType, getWorkType(cmbxWorkList.Text), getDelivery());
                     tbxOutput.AppendText("Worklist item created: ID " + id.ToString() + " Type: " + formType + Environment.NewLine);
                 }
@@ -271,7 +271,7 @@ namespace PaperCapture
         /// <param name="pDocsRequested">Amount of documents we need to scan (-1 = scan all docs in the feeder) </param>
         /// <returns>List<image> contains all the scanned images for the batch</image></returns>
         private List<Image> scanDocs(ScannerControl pScanner, int pDocsRequested)
-        {            
+        {
             List<Image> scans = new List<Image>();
             List<Image> tmpScans = new List<Image>();
             bool hasPages = true;
@@ -281,9 +281,35 @@ namespace PaperCapture
                 try
                 {
                     tmpScans = pScanner.Scan();
+                    EncoderParameters pars = new EncoderParameters(1);
+                    EncoderParameter par;
+                    System.Drawing.Imaging.Encoder coder = System.Drawing.Imaging.Encoder.Compression;
+                            
                     foreach (Image img in tmpScans)
                     {
-                        scans.Add(img);
+                        // convert colour images to .jpg else convert to tiff. This allows us to move and assocaiate 
+                        //b&w and colour images by using the file extension prevent sending colour images as monochrome tiffs
+                        string imgFormat;
+                        MemoryStream ms = new MemoryStream();
+                        if (cbxColour.Checked)//if colour selected convert to jpeg
+                        {
+                            //fileExt = ".jpg";
+                            imgFormat = "image/jpeg";
+                            par = new EncoderParameter(coder, (long)EncoderValue.ColorTypeCMYK);
+                        }
+                        else //else convert to tiff
+                        {
+                            imgFormat = "image/tiff";
+                            par = new EncoderParameter(coder, (long)EncoderValue.CompressionCCITT4);
+
+                        }
+                        ImageCodecInfo codec = Requests.getEncoderInfo(imgFormat);
+                        pars.Param[0] = par;    
+                        img.Save(ms, codec, pars);
+                        Image tmpImg = Image.FromStream(ms);
+
+                                              
+                        scans.Add(tmpImg);
                         if (cbxPreview.Checked)
                         {
                             previewImage(img);
@@ -367,13 +393,14 @@ namespace PaperCapture
             pMsg = pMsg.ToUpper();
             if (pMsg == "KEINEN SCANNER GEFUNDEN.") { outMsg = "Scanner not found"; }
             if (pMsg == "PROPERTY WIRD NICT UNTERSTÜTZT") { outMsg = "Property is not supported"; }
-            if (pMsg == "EXCEPTION FROM HRESULT: 0X80210003") { 
+            if (pMsg == "EXCEPTION FROM HRESULT: 0X80210003")
+            {
                 outMsg = "There are no documents in the document feeder.";
                 if (!cbxScanAll.Checked)
                 {
                     outMsg = outMsg + " " + numDocsInput.Value + " were documents expected. Please check and scan again";
                 }
-                
+
             }
             if (pMsg == "EXCEPTION FROM HRESULT: 0X80210004") { outMsg = "An unspecified problem occurred with the scanner's document feeder."; }
             if (pMsg == "EXCEPTION FROM HRESULT: 0X80210006") { outMsg = "The device is busy. Close any apps that are using this device or wait for it to finish and then try again."; }
@@ -453,12 +480,12 @@ namespace PaperCapture
                     //pass 0 in to indicate the first page of a new document
                     id = Requests.AddImageToDocument(id, img, doc.PaperSize, formTypeOverride(""));
                 }
-                string formType = formTypeOverride(Requests.GetFormType(id));                               
+                string formType = formTypeOverride(Requests.GetFormType(id));
                 Requests.CreateWorklistItem(id, formType, getWorkType(cmbxWorkList.Text), getDelivery());
                 LogMsg("Worklist item created: ID " + id.ToString() + " Type: " + formType);
             }
         }
-  
+
         private void cbxScanAndSend_CheckedChanged(object sender, EventArgs e)
         {
             if (cbxScanAndSend.Checked) { scanButton.Text = "Scan and Send"; } else { scanButton.Text = "Scan Now"; }
@@ -468,7 +495,7 @@ namespace PaperCapture
         private void writeRegistry(string pName, string pValue)
         {
             //FolderPath - store the last path a folder import took place from.        
-            RegistryKey newKey = Registry.LocalMachine.CreateSubKey(@"Software\HMLR\LC");          
+            RegistryKey newKey = Registry.LocalMachine.CreateSubKey(@"Software\HMLR\LC");
             newKey.SetValue(pName, (string)pValue);
         }
 
@@ -501,20 +528,20 @@ namespace PaperCapture
             if (pWrkType == "LC - Rectifications") { res = "lc_rect"; }
             if (pWrkType == "LC - Renewals") { res = "lc_renewal"; }
             if (pWrkType == "Cancellations") { res = "cancel"; }
-            if (pWrkType == "Part Cancellations") { res = "canc_part"; }
             if (pWrkType == "Portal Search") { res = "prt_search"; }
             if (pWrkType == "Searches - Full") { res = "search_full"; }
             if (pWrkType == "Searches - Bankruptcy") { res = "search_bank"; }
             if (pWrkType == "Office Copy") { res = "oc"; }
+            if (pWrkType == "Auto Detect") { res = "auto"; }
             return res;
         }
 
         private void pbxShowLog_Click(object sender, EventArgs e)
         {
             //toggle show or hide log
-            
-            
-            showLog(!tbxOutput.Visible);            
+
+
+            showLog(!tbxOutput.Visible);
         }
 
         private void showLog(bool pShow)
@@ -524,7 +551,7 @@ namespace PaperCapture
                 tbxOutput.Visible = true;
                 pbxShowLog.Image = imglstMain.Images[0];
                 this.Height = 628;
-                gpbxLog.Height = 250; 
+                gpbxLog.Height = 250;
             }
             else
             {
@@ -540,11 +567,11 @@ namespace PaperCapture
         private string getDelivery()
         {
             string delivery = "Postal"; //default to Postal
-            if (rdbFax.Checked) 
+            if (rdbFax.Checked)
             {
                 delivery = "Fax";
             }
-            else if (rdbPortalFallout.Checked) 
+            else if (rdbPortalFallout.Checked)
             {
                 delivery = "Portal";
             }
@@ -570,5 +597,21 @@ namespace PaperCapture
             rdbPortalFallout.Enabled = !pContinue;
         }
 
+        private void cbxPreview_CheckedChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void numPagesInput_ValueChanged(object sender, EventArgs e)
+        {
+            if (cbxTwoSides.Checked)
+            {
+                if (numPagesInput.Value < 2)
+                {
+                    numPagesInput.Value = 2;
+                }
+            }
+
+        }
     }
 }

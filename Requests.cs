@@ -64,23 +64,40 @@ namespace PaperCapture
             return JsonConvert.DeserializeObject(resp);
         }
 
-        private static dynamic PostImage(string url, Image image)
+        private static dynamic PostImage(string url, Image image, bool pMonochrome)
         {
-            MemoryStream ms = new MemoryStream();            
-            //set compression parameters
-            ImageCodecInfo codec = getEncoderInfo("image/tiff");
-            System.Drawing.Imaging.Encoder coder = System.Drawing.Imaging.Encoder.Compression;
+            MemoryStream ms = new MemoryStream();
+            string imgNam = @"C:\temp\newscantif";
+            string fileExt;
+            string imgFormat;
             EncoderParameters pars = new EncoderParameters(1);
-            EncoderParameter par = new EncoderParameter(coder, (long)EncoderValue.CompressionCCITT4);
+            EncoderParameter par;
+            System.Drawing.Imaging.Encoder coder = System.Drawing.Imaging.Encoder.Compression;
+            //set compression parameters
+            if (pMonochrome)
+            {
+                fileExt = ".tif";
+                imgFormat = "image/tiff";
+                par = new EncoderParameter(coder, (long)EncoderValue.CompressionCCITT4);                
+            }
+            else
+            {
+                fileExt = ".jpg";
+                imgFormat = "image/jpeg";
+                par = new EncoderParameter(coder, (long)EncoderValue.ColorTypeCMYK);
+                
+            }
+            ImageCodecInfo codec = getEncoderInfo(imgFormat);
             pars.Param[0] = par;
             //image.Save(ms, System.Drawing.Imaging.ImageFormat.Tiff);
             ctr++;
-            image.Save(@"C:\temp\newscantif" + ctr.ToString() + ".tif", codec, pars);
+            image.Save(imgNam + ctr.ToString() + fileExt , codec, pars);
             image.Save(ms, codec, pars);
+            Image img = Image.FromStream(ms);
             byte[] bytes = ms.ToArray();
             WebRequest request = WebRequest.Create(url);
             request.Method = "POST";
-            request.ContentType = "image/tiff";
+            request.ContentType = imgFormat;
             request.ContentLength = bytes.Length;
             Stream s = request.GetRequestStream();
             s.Write(bytes, 0, bytes.Length);
@@ -115,13 +132,18 @@ namespace PaperCapture
         {
             try
             {
+                bool vMonochrome = true;
+                if (!ImageFormat.Tiff.Equals(pImage.RawFormat))
+                {
+                    vMonochrome = false;
+                }               
                 dynamic document;
                 string url = caseworkAPI + @"/forms/";
                 if (pDocID > 0)
                 { url = url + pDocID.ToString() + "/"; } //subsequent pages use a different route
                 url = url + pPaperSize;
                 if (pFormType != "") { url = url + "?type=" + pFormType; } //passing in form type bypasses the OCR process            
-                document = PostImage(url, pImage);
+                document = PostImage(url, pImage, vMonochrome);
                 return document;
             }
             catch (Exception exp)
@@ -171,7 +193,7 @@ namespace PaperCapture
             dynamic id = PostJSON(caseworkAPI + @"/applications", json);
         }
 
-        private static ImageCodecInfo getEncoderInfo(string mimeType)
+        public static ImageCodecInfo getEncoderInfo(string mimeType)
         {
             // Get image codecs for all image formats
             ImageCodecInfo[] codecs = ImageCodecInfo.GetImageEncoders();

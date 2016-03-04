@@ -42,6 +42,7 @@
             this.rdbPost = new System.Windows.Forms.RadioButton();
             this.cmbxFormType = new System.Windows.Forms.ComboBox();
             this.lblFormType = new System.Windows.Forms.Label();
+            this.cbxPreview = new System.Windows.Forms.CheckBox();
             this.cmbxWorkList = new System.Windows.Forms.ComboBox();
             this.lblAppnType = new System.Windows.Forms.Label();
             this.lblFormsToScan = new System.Windows.Forms.Label();
@@ -49,17 +50,17 @@
             this.numDocsInput = new System.Windows.Forms.NumericUpDown();
             this.cmbxSource = new System.Windows.Forms.ComboBox();
             this.label3 = new System.Windows.Forms.Label();
-            this.cbxPreview = new System.Windows.Forms.CheckBox();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.cbxScanAndSend = new System.Windows.Forms.CheckBox();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.tsProg = new System.Windows.Forms.ToolStripProgressBar();
             this.tslblStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.gbpScanOptions = new System.Windows.Forms.GroupBox();
+            this.cbxColour = new System.Windows.Forms.CheckBox();
+            this.cmbxPaperSize = new System.Windows.Forms.ComboBox();
             this.pbxShowLog = new System.Windows.Forms.PictureBox();
             this.imglstMain = new System.Windows.Forms.ImageList(this.components);
             this.gpbxLog = new System.Windows.Forms.GroupBox();
-            this.cmbxPaperSize = new System.Windows.Forms.ComboBox();
             ((System.ComponentModel.ISupportInitialize)(this.numPagesInput)).BeginInit();
             this.grpbxFrmDtls.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numDocsInput)).BeginInit();
@@ -97,11 +98,12 @@
             0,
             0,
             0});
+            this.numPagesInput.ValueChanged += new System.EventHandler(this.numPagesInput_ValueChanged);
             // 
             // cbxTwoSides
             // 
             this.cbxTwoSides.AutoSize = true;
-            this.cbxTwoSides.Location = new System.Drawing.Point(295, 85);
+            this.cbxTwoSides.Location = new System.Drawing.Point(207, 84);
             this.cbxTwoSides.Margin = new System.Windows.Forms.Padding(4);
             this.cbxTwoSides.Name = "cbxTwoSides";
             this.cbxTwoSides.Size = new System.Drawing.Size(111, 21);
@@ -137,6 +139,7 @@
             this.grpbxFrmDtls.Controls.Add(this.scanButton);
             this.grpbxFrmDtls.Controls.Add(this.cmbxFormType);
             this.grpbxFrmDtls.Controls.Add(this.lblFormType);
+            this.grpbxFrmDtls.Controls.Add(this.cbxPreview);
             this.grpbxFrmDtls.Controls.Add(this.cmbxWorkList);
             this.grpbxFrmDtls.Controls.Add(this.lblAppnType);
             this.grpbxFrmDtls.Location = new System.Drawing.Point(16, 131);
@@ -228,6 +231,18 @@
             this.lblFormType.TabIndex = 3;
             this.lblFormType.Text = "Form Type:";
             // 
+            // cbxPreview
+            // 
+            this.cbxPreview.AutoSize = true;
+            this.cbxPreview.Location = new System.Drawing.Point(6, 145);
+            this.cbxPreview.Name = "cbxPreview";
+            this.cbxPreview.Size = new System.Drawing.Size(79, 21);
+            this.cbxPreview.TabIndex = 16;
+            this.cbxPreview.Text = "Preview";
+            this.cbxPreview.UseVisualStyleBackColor = true;
+            this.cbxPreview.Visible = false;
+            this.cbxPreview.CheckedChanged += new System.EventHandler(this.cbxPreview_CheckedChanged);
+            // 
             // cmbxWorkList
             // 
             this.cmbxWorkList.FormattingEnabled = true;
@@ -243,7 +258,7 @@
             "Searches - Full",
             "Searches - Bankruptcy",
             "Cancellations",
-            "Part Cancelations"});
+            "Auto Detect"});
             this.cmbxWorkList.Location = new System.Drawing.Point(121, 33);
             this.cmbxWorkList.Name = "cmbxWorkList";
             this.cmbxWorkList.Size = new System.Drawing.Size(311, 24);
@@ -317,21 +332,10 @@
             this.label3.TabIndex = 12;
             this.label3.Text = "Source";
             // 
-            // cbxPreview
-            // 
-            this.cbxPreview.AutoSize = true;
-            this.cbxPreview.Location = new System.Drawing.Point(73, 84);
-            this.cbxPreview.Name = "cbxPreview";
-            this.cbxPreview.Size = new System.Drawing.Size(79, 21);
-            this.cbxPreview.TabIndex = 16;
-            this.cbxPreview.Text = "Preview";
-            this.cbxPreview.UseVisualStyleBackColor = true;
-            this.cbxPreview.Visible = false;
-            // 
             // cbxScanAndSend
             // 
             this.cbxScanAndSend.AutoSize = true;
-            this.cbxScanAndSend.Location = new System.Drawing.Point(161, 84);
+            this.cbxScanAndSend.Location = new System.Drawing.Point(73, 84);
             this.cbxScanAndSend.Name = "cbxScanAndSend";
             this.cbxScanAndSend.Size = new System.Drawing.Size(127, 21);
             this.cbxScanAndSend.TabIndex = 17;
@@ -364,13 +368,13 @@
             // 
             // gbpScanOptions
             // 
+            this.gbpScanOptions.Controls.Add(this.cbxColour);
             this.gbpScanOptions.Controls.Add(this.cmbxPaperSize);
             this.gbpScanOptions.Controls.Add(this.cmbxSource);
             this.gbpScanOptions.Controls.Add(this.label3);
             this.gbpScanOptions.Controls.Add(this.label1);
             this.gbpScanOptions.Controls.Add(this.cbxScanAndSend);
             this.gbpScanOptions.Controls.Add(this.cbxScanAll);
-            this.gbpScanOptions.Controls.Add(this.cbxPreview);
             this.gbpScanOptions.Controls.Add(this.numDocsInput);
             this.gbpScanOptions.Controls.Add(this.numPagesInput);
             this.gbpScanOptions.Controls.Add(this.lblFormsToScan);
@@ -381,6 +385,28 @@
             this.gbpScanOptions.TabIndex = 20;
             this.gbpScanOptions.TabStop = false;
             this.gbpScanOptions.Text = "Scanning Options";
+            // 
+            // cbxColour
+            // 
+            this.cbxColour.AutoSize = true;
+            this.cbxColour.Location = new System.Drawing.Point(325, 84);
+            this.cbxColour.Name = "cbxColour";
+            this.cbxColour.Size = new System.Drawing.Size(71, 21);
+            this.cbxColour.TabIndex = 19;
+            this.cbxColour.Text = "Colour";
+            this.cbxColour.UseVisualStyleBackColor = true;
+            // 
+            // cmbxPaperSize
+            // 
+            this.cmbxPaperSize.FormattingEnabled = true;
+            this.cmbxPaperSize.Items.AddRange(new object[] {
+            "A3",
+            "A4",
+            "A5"});
+            this.cmbxPaperSize.Location = new System.Drawing.Point(402, 81);
+            this.cmbxPaperSize.Name = "cmbxPaperSize";
+            this.cmbxPaperSize.Size = new System.Drawing.Size(70, 24);
+            this.cmbxPaperSize.TabIndex = 18;
             // 
             // pbxShowLog
             // 
@@ -408,18 +434,6 @@
             this.gpbxLog.TabIndex = 22;
             this.gpbxLog.TabStop = false;
             this.gpbxLog.Text = "Log";
-            // 
-            // cmbxPaperSize
-            // 
-            this.cmbxPaperSize.FormattingEnabled = true;
-            this.cmbxPaperSize.Items.AddRange(new object[] {
-            "A3",
-            "A4",
-            "A5"});
-            this.cmbxPaperSize.Location = new System.Drawing.Point(448, 81);
-            this.cmbxPaperSize.Name = "cmbxPaperSize";
-            this.cmbxPaperSize.Size = new System.Drawing.Size(82, 24);
-            this.cmbxPaperSize.TabIndex = 18;
             // 
             // ScanOptions
             // 
@@ -479,6 +493,7 @@
         private System.Windows.Forms.RadioButton rdbFax;
         private System.Windows.Forms.RadioButton rdbPost;
         private System.Windows.Forms.Label lblRecievedBy;
+        private System.Windows.Forms.CheckBox cbxColour;
         private System.Windows.Forms.ComboBox cmbxPaperSize;
     }
 }

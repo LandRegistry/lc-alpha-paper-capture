@@ -178,8 +178,8 @@
             // tsslblDoc
             // 
             this.tsslblDoc.Name = "tsslblDoc";
-            this.tsslblDoc.Size = new System.Drawing.Size(141, 18);
-            this.tsslblDoc.Text = "toolStripStatusLabel1";
+            this.tsslblDoc.Size = new System.Drawing.Size(49, 18);
+            this.tsslblDoc.Text = "Status";
             // 
             // tsProgBr
             // 

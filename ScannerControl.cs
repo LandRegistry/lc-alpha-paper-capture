@@ -25,11 +25,11 @@ namespace PaperCapture
         private bool twoSided;
 
         private const int RESOLUTION = 180;
-        private const bool MONOCHROME = true;
+        private bool MONOCHROME = true;
         private SizeF PAGESIZE = new SizeF(8.27f, 11.7f);
         private const int THRESHOLD = 180;
 
-        internal ScannerControl(int pNumPages, bool pTwoSided, bool pUseFlatbed, string pPaperSize)
+        internal ScannerControl(int pNumPages, bool pTwoSided, bool pUseFlatbed, string pPaperSize, bool pMonochrome)
         {
             this.PAGESIZE = new SizeF(8.27f, 11.7f); //default to A4
             if (pPaperSize == "A3") {this.PAGESIZE = new SizeF(11.67f, 16.47f);}
@@ -37,6 +37,7 @@ namespace PaperCapture
             this.numPages = pNumPages;
             this.twoSided = pTwoSided;
             this.useFlatbed = pUseFlatbed; //if not useflatbed then use doc feeder
+            this.MONOCHROME = pMonochrome;
             setupScanner();
             setupPicture();
         }
@@ -67,7 +68,8 @@ namespace PaperCapture
 
         private void setupPicture()
         {
-            device.PictureSettings.CurrentIntent = MONOCHROME ? CurrentIntent.ImageTypeText : CurrentIntent.ImageTypeGrayscale;
+            //device.PictureSettings.CurrentIntent = MONOCHROME ? CurrentIntent.ImageTypeText : CurrentIntent.ImageTypeGrayscale;
+            device.PictureSettings.CurrentIntent = MONOCHROME ? CurrentIntent.ImageTypeText : CurrentIntent.ImageTypeColor;
             device.PictureSettings.VerticalResolution = RESOLUTION;
             device.PictureSettings.HorizontalResolution = RESOLUTION;
             device.PictureSettings.HorizontalExtent = (int)(PAGESIZE.Width * RESOLUTION);

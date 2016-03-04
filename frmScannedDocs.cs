@@ -35,16 +35,18 @@ namespace PaperCapture
         private string deliveryInd;
         private bool showingPrev = false;
         private ImageList imgLst;
+        private bool monochrome;
 
         /// <summary>
         /// Adds nodes to the tree view to allow the user to check before sending the batch
         /// </summary>
         /// <param name="pDocBatch">List of LCDoc objects</param>
-        public void buildTree(List<LCDoc> pDocBatch, string pWorkType, string pFormTypeOverride, string pDeliveryInd)
+        public void buildTree(List<LCDoc> pDocBatch, string pWorkType, string pFormTypeOverride, string pDeliveryInd, bool pMonochrome)
         {
             this.workType = pWorkType;
             this.formTypeOverride = pFormTypeOverride;
             this.deliveryInd = pDeliveryInd;
+            this.monochrome = pMonochrome;
             if (pFormTypeOverride != "")
             {
                 lblBatchDetl.Text = pWorkType.ToUpper() + " | " + pFormTypeOverride + " | " + pDeliveryInd;
@@ -196,7 +198,8 @@ namespace PaperCapture
                     {
                         //detect paper size as various sizes could have beendragged together
                         string paperSize = getPaperSize(image);
-                        //pass id of 0 to indicate first page of a new document                        
+                        //pass id of 0 to indicate first page of a new document   
+                        
                         vDoc = Requests.AddImageToDocument(id, image, paperSize, formTypeOverride);
                         if (id == 0)
                         {
@@ -209,6 +212,7 @@ namespace PaperCapture
                         x++;
                     }
                     Requests.CreateWorklistItem(id, formType, this.workType, this.deliveryInd);
+                    //Requests.CreateWorklistItem(id, formType, "all", this.deliveryInd);
                     this.parentFrm.LogMsg("Worklist item created: ID " + id.ToString() + " Type: " + formType + Environment.NewLine);
                     i++;
                 }
@@ -240,6 +244,7 @@ namespace PaperCapture
                 paperSize = "A5";
             else if (imageWidthPrint > 1350)
                 paperSize = "A3";
+            this.parentFrm.LogMsg("paper size " + paperSize + ":  width " + imageWidthPrint.ToString());
             return paperSize;
         }
 
@@ -426,16 +431,25 @@ namespace PaperCapture
 
             // Retrieve the node that was dragged.
             TreeNode draggedNode = (TreeNode)e.Data.GetData(typeof(TreeNode));
-
+            int draggedDocNo;
+            if (draggedNode.Parent == null)
+            {
+                tsLblStatus.Text = "dragged node has no parent";
+                draggedDocNo = Convert.ToInt32(targetNode.Parent.Text) - 1;
+                //return; //cant dragdrop a document node
+            }
+            else
+            {
+                draggedDocNo = Convert.ToInt32(draggedNode.Parent.Text) - 1;
+            }
             //break if target node create new doc   
             if (targetNode == null)
             {
                 //TODO create new document in tree
                 return;
             }
-            int draggedDocNo = Convert.ToInt32(draggedNode.Parent.Text) - 1;
+                      
             int draggedPageNo = Convert.ToInt32(draggedNode.Text) - 1;
-
             int targetDocNo;
             int targetPageNo;
             if (targetNode.Parent != null)//they dragged on to a page node
@@ -452,9 +466,24 @@ namespace PaperCapture
 
             if ((draggedDocNo == targetDocNo))
             {
-                MessageBox.Show("Dragged on to the same document (" + draggedDocNo.ToString() + "). move page " + draggedPageNo.ToString() + " to be page " + targetPageNo.ToString());
-                MoveElement(docBatch[targetDocNo].ImgLst, draggedPageNo, targetPageNo);
-                refreshTree();
+                if ((draggedPageNo != targetPageNo))
+                {
+                    tsLblStatus.Text = "Moved page " + (draggedPageNo + 1).ToString() + " to be page " + (targetPageNo + 1).ToString() + " on doc " + (draggedDocNo + 1).ToString();
+                    //MoveElement(ref docBatch[targetDocNo].ImgLst, draggedPageNo, targetPageNo);
+
+                    var element = docBatch[targetDocNo].ImgLst[draggedPageNo];
+                    if (draggedPageNo > targetPageNo)
+                    {
+                        docBatch[targetDocNo].ImgLst.RemoveAt(draggedPageNo);
+                        docBatch[targetDocNo].ImgLst.Insert(targetPageNo, element);
+                    }
+                    else
+                    {
+                        docBatch[targetDocNo].ImgLst.Insert(targetPageNo+1, element);
+                        docBatch[targetDocNo].ImgLst.RemoveAt(draggedPageNo);
+                    }
+                    refreshTree();
+                }
                 return;
             }
            
@@ -472,10 +501,9 @@ namespace PaperCapture
                     
                     //move the data 
                     Image img = docBatch[draggedDocNo].ImgLst[draggedPageNo];
-                    MessageBox.Show("insert into doc " + targetDocNo.ToString() + " page number " + targetPageNo.ToString());
+                    tsLblStatus.Text = " Insert into doc " + (targetDocNo+1).ToString() + " page number " + (targetPageNo+1).ToString();
                     docBatch[targetDocNo].ImgLst.Insert(targetPageNo, img);
-                    MessageBox.Show("remove from doc " + draggedDocNo.ToString() + " page number " + draggedPageNo.ToString());
-                    docBatch[draggedDocNo].ImgLst.RemoveAt(draggedPageNo);
+                    tsLblStatus.Text = " Remove from doc " + (draggedDocNo+1).ToString() + " page number " + (draggedPageNo+1).ToString();                    docBatch[draggedDocNo].ImgLst.RemoveAt(draggedPageNo);
                     //targetNode.Nodes.Add(draggedNode);
 
                     if (docBatch[draggedDocNo].ImgLst.Count <= 0)
@@ -510,8 +538,9 @@ namespace PaperCapture
             return ContainsNode(node1, node2.Parent);
         }
 
-        public static void MoveElement(List<Image> list, int fromIndex, int toIndex)
+        public static void MoveElement(ref List<Image> list, int fromIndex, int toIndex)
         {
+            if (fromIndex == toIndex) return;            
             if ((fromIndex < 0) || (fromIndex >= list.Count))
             {
                 throw new ArgumentException("From index is invalid");
@@ -521,10 +550,9 @@ namespace PaperCapture
                 throw new ArgumentException("To index is invalid");
             }
 
-            if (fromIndex == toIndex) return;
-
             var element = list[fromIndex];
-
+           
+            
             if (fromIndex > toIndex)
             {
                 list.RemoveAt(fromIndex);
@@ -532,7 +560,7 @@ namespace PaperCapture
             }
             else
             {
-                list.Insert(toIndex + 1, element);
+                list.Insert(toIndex, element);
                 list.RemoveAt(fromIndex);
             }
         }
