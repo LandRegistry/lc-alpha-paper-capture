@@ -8,12 +8,16 @@ using Newtonsoft.Json;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Drawing.Imaging;
+using System.Configuration;
 
 namespace PaperCapture
 {
     class Requests
     {
-        private static string caseworkAPI = @"http://localhost:5006";
+
+        private static string caseworkAPI = ConfigurationManager.AppSettings["CaseworkApiUrl"];
+        private static string caseworkEnvironment = ConfigurationManager.AppSettings["caseworkEnvironment"];
+
         private static dynamic PostJSON(string url, string data)
         {
             try
@@ -165,18 +169,24 @@ namespace PaperCapture
             dynamic APIStatus = "";
             try
             {
-
                 dynamic response = Get(url);
                 dynamic data = JsonConvert.DeserializeObject(response.ToString());
                 APIStatus = "LC Casework API status: " + data.dependencies["land-charges"];
-
             }
             catch (Exception exp)
             {
                 APIStatus = exp.Message.ToString();
             }
-
-            return APIStatus.ToString();
+            string configavail = "*" + caseworkEnvironment + "*";
+            if (configavail == "**")
+            {
+                if (!(File.Exists("PaperCapture.exe.config")))
+                {
+                    MessageBox.Show("PaperCapture.exe.config not found. This file should sit in the same directory as PaperCapture.exe");
+                    return "Could not find PaperCapture.exe.config, Environment could not be configured";
+                }
+            }
+            return "Environment: " + caseworkEnvironment + ": " + APIStatus.ToString();
         }
 
 

@@ -24,7 +24,7 @@ namespace PaperCapture
         {
             InitializeComponent();
             cmbxWorkList.SelectedIndex = 0;
-            cmbxFormType.SelectedIndex = 0;
+            cmbxFormType.SelectedIndex = 0;            
             cmbxPaperSize.SelectedIndex = 1;
             string scnrNam = "";
             try

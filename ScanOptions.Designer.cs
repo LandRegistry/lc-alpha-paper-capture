@@ -247,6 +247,7 @@
             // 
             this.cmbxWorkList.FormattingEnabled = true;
             this.cmbxWorkList.Items.AddRange(new object[] {
+            "Auto Detect",
             "Bankruptcy - Registrations",
             "Bankruptcy - Amendments",
             "Bankruptcy - Rectifications",
@@ -257,8 +258,7 @@
             "LC - Renewals",
             "Searches - Full",
             "Searches - Bankruptcy",
-            "Cancellations",
-            "Auto Detect"});
+            "Cancellations"});
             this.cmbxWorkList.Location = new System.Drawing.Point(121, 33);
             this.cmbxWorkList.Name = "cmbxWorkList";
             this.cmbxWorkList.Size = new System.Drawing.Size(311, 24);
