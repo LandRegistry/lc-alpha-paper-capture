@@ -38,7 +38,6 @@
             this.tsbRotate = new System.Windows.Forms.ToolStripButton();
             this.tsbPrev = new System.Windows.Forms.ToolStripButton();
             this.tsbNext = new System.Windows.Forms.ToolStripButton();
-            this.tsbPreview = new System.Windows.Forms.ToolStripButton();
             this.tsbDelete = new System.Windows.Forms.ToolStripButton();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.tsslblDoc = new System.Windows.Forms.ToolStripStatusLabel();
@@ -47,6 +46,8 @@
             this.imgLstIcons = new System.Windows.Forms.ImageList(this.components);
             this.btnScanMore = new System.Windows.Forms.Button();
             this.lblBatchDetl = new System.Windows.Forms.Label();
+            this.tbtnMoveDown = new System.Windows.Forms.ToolStripButton();
+            this.tbtnUp = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.pbxImage)).BeginInit();
             this.toolStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
@@ -106,8 +107,9 @@
             this.tsbRotate,
             this.tsbPrev,
             this.tsbNext,
-            this.tsbPreview,
-            this.tsbDelete});
+            this.tsbDelete,
+            this.tbtnMoveDown,
+            this.tbtnUp});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(813, 25);
@@ -132,6 +134,7 @@
             this.tsbPrev.Name = "tsbPrev";
             this.tsbPrev.Size = new System.Drawing.Size(23, 22);
             this.tsbPrev.Text = "toolStripButton2";
+            this.tsbPrev.ToolTipText = "Previous Page";
             this.tsbPrev.Click += new System.EventHandler(this.tsbPrev_Click);
             // 
             // tsbNext
@@ -142,17 +145,8 @@
             this.tsbNext.Name = "tsbNext";
             this.tsbNext.Size = new System.Drawing.Size(23, 22);
             this.tsbNext.Text = "toolStripButton3";
+            this.tsbNext.ToolTipText = "Next Page";
             this.tsbNext.Click += new System.EventHandler(this.tsbNext_Click);
-            // 
-            // tsbPreview
-            // 
-            this.tsbPreview.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.tsbPreview.Image = ((System.Drawing.Image)(resources.GetObject("tsbPreview.Image")));
-            this.tsbPreview.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tsbPreview.Name = "tsbPreview";
-            this.tsbPreview.Size = new System.Drawing.Size(23, 22);
-            this.tsbPreview.Text = "toolStripButton4";
-            this.tsbPreview.Click += new System.EventHandler(this.tsbPreview_Click);
             // 
             // tsbDelete
             // 
@@ -198,6 +192,7 @@
             this.imgLstIcons.TransparentColor = System.Drawing.Color.Transparent;
             this.imgLstIcons.Images.SetKeyName(0, "699044-icon-55-document-text-128.png");
             this.imgLstIcons.Images.SetKeyName(1, "trash.png");
+            this.imgLstIcons.Images.SetKeyName(2, "movedocup.png");
             // 
             // btnScanMore
             // 
@@ -217,6 +212,28 @@
             this.lblBatchDetl.Name = "lblBatchDetl";
             this.lblBatchDetl.Size = new System.Drawing.Size(0, 17);
             this.lblBatchDetl.TabIndex = 34;
+            // 
+            // tbtnMoveDown
+            // 
+            this.tbtnMoveDown.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.tbtnMoveDown.Image = ((System.Drawing.Image)(resources.GetObject("tbtnMoveDown.Image")));
+            this.tbtnMoveDown.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tbtnMoveDown.Name = "tbtnMoveDown";
+            this.tbtnMoveDown.Size = new System.Drawing.Size(23, 22);
+            this.tbtnMoveDown.Text = "Down";
+            this.tbtnMoveDown.ToolTipText = "Move Page Down";
+            this.tbtnMoveDown.Click += new System.EventHandler(this.tbtnMoveDown_Click);
+            // 
+            // tbtnUp
+            // 
+            this.tbtnUp.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.tbtnUp.Image = ((System.Drawing.Image)(resources.GetObject("tbtnUp.Image")));
+            this.tbtnUp.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tbtnUp.Name = "tbtnUp";
+            this.tbtnUp.Size = new System.Drawing.Size(23, 22);
+            this.tbtnUp.Text = "Up";
+            this.tbtnUp.ToolTipText = "Move Page Up";
+            this.tbtnUp.Click += new System.EventHandler(this.tbtnUp_Click);
             // 
             // frmScannedDocs
             // 
@@ -254,7 +271,6 @@
         private System.Windows.Forms.ToolStripButton tsbRotate;
         private System.Windows.Forms.ToolStripButton tsbPrev;
         private System.Windows.Forms.ToolStripButton tsbNext;
-        private System.Windows.Forms.ToolStripButton tsbPreview;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ImageList imgLstIcons;
         private System.Windows.Forms.ToolStripStatusLabel tsslblDoc;
@@ -263,5 +279,7 @@
         private System.Windows.Forms.ToolStripButton tsbDelete;
         private System.Windows.Forms.Button btnScanMore;
         private System.Windows.Forms.Label lblBatchDetl;
+        private System.Windows.Forms.ToolStripButton tbtnMoveDown;
+        private System.Windows.Forms.ToolStripButton tbtnUp;
     }
 }

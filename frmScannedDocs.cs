@@ -92,7 +92,7 @@ namespace PaperCapture
                     imgCtr++;
                 }
                 trvwMain.ExpandAll();
-                trvwMain.SelectedNode = trvwMain.Nodes[0].Nodes[0];
+               // trvwMain.SelectedNode = trvwMain.Nodes[0].Nodes[0];
             }
         }
 
@@ -140,8 +140,8 @@ namespace PaperCapture
                 {
                     TreeNode parentNode = node.Parent;
                     tsslblDoc.Text = string.Format("Document {0} Page {1}", parentNode.Text, node.Text);
-                    int docNo = Convert.ToInt32(parentNode.Text) - 1;
-                    int pageNo = Convert.ToInt32(node.Text) - 1;
+                    int docNo = parentNode.Index;
+                    int pageNo = node.Index;
                     pbxImage.Image = docBatch[docNo].ImgLst[pageNo];
                 }
             }
@@ -199,7 +199,7 @@ namespace PaperCapture
                         //detect paper size as various sizes could have beendragged together
                         string paperSize = getPaperSize(image);
                         //pass id of 0 to indicate first page of a new document   
-                        
+
                         vDoc = Requests.AddImageToDocument(id, image, paperSize, formTypeOverride);
                         if (id == 0)
                         {
@@ -370,7 +370,7 @@ namespace PaperCapture
             this.parentFrm.LogMsg("Sending documents was cancelled");
             Close();
         }
-           
+
 
         private void tsbDelete_Click(object sender, EventArgs e)
         {
@@ -448,20 +448,20 @@ namespace PaperCapture
                 //TODO create new document in tree
                 return;
             }
-                      
+
             int draggedPageNo = Convert.ToInt32(draggedNode.Text) - 1;
             int targetDocNo;
             int targetPageNo;
             if (targetNode.Parent != null)//they dragged on to a page node
             {
                 targetDocNo = Convert.ToInt32(targetNode.Parent.Text) - 1;
-                targetPageNo = Convert.ToInt32(targetNode.Text) -1;
+                targetPageNo = Convert.ToInt32(targetNode.Text) - 1;
             }
             else //they dragged on to a document node
             {
                 targetDocNo = Convert.ToInt32(targetNode.Text) - 1;
                 //work out the last page
-                targetPageNo = Convert.ToInt32(targetNode.Nodes.Count-1);
+                targetPageNo = Convert.ToInt32(targetNode.Nodes.Count - 1);
             }
 
             if ((draggedDocNo == targetDocNo))
@@ -479,14 +479,14 @@ namespace PaperCapture
                     }
                     else
                     {
-                        docBatch[targetDocNo].ImgLst.Insert(targetPageNo+1, element);
+                        docBatch[targetDocNo].ImgLst.Insert(targetPageNo + 1, element);
                         docBatch[targetDocNo].ImgLst.RemoveAt(draggedPageNo);
                     }
                     refreshTree();
                 }
                 return;
             }
-           
+
             // Confirm that the node at the drop location is not 
             // the dragged node or a descendant of the dragged node.
             if (!draggedNode.Equals(targetNode) && !ContainsNode(draggedNode, targetNode))
@@ -498,16 +498,16 @@ namespace PaperCapture
                     draggedNode.Remove();
                     if (targetNode.Parent != null)
                         targetNode = targetNode.Parent;
-                    
+
                     //move the data 
                     Image img = docBatch[draggedDocNo].ImgLst[draggedPageNo];
-                    tsLblStatus.Text = " Insert into doc " + (targetDocNo+1).ToString() + " page number " + (targetPageNo+1).ToString();
+                    tsLblStatus.Text = " Insert into doc " + (targetDocNo + 1).ToString() + " page number " + (targetPageNo + 1).ToString();
                     docBatch[targetDocNo].ImgLst.Insert(targetPageNo, img);
-                    tsLblStatus.Text = " Remove from doc " + (draggedDocNo+1).ToString() + " page number " + (draggedPageNo+1).ToString();                    docBatch[draggedDocNo].ImgLst.RemoveAt(draggedPageNo);
+                    tsLblStatus.Text = " Remove from doc " + (draggedDocNo + 1).ToString() + " page number " + (draggedPageNo + 1).ToString(); docBatch[draggedDocNo].ImgLst.RemoveAt(draggedPageNo);
                     //targetNode.Nodes.Add(draggedNode);
 
                     if (docBatch[draggedDocNo].ImgLst.Count <= 0)
-                    {                       
+                    {
                         docBatch.RemoveAt(draggedDocNo); //if there are no other pages delete the document
                     }
 
@@ -517,7 +517,7 @@ namespace PaperCapture
                         docBatch[i].SeqNo = i + 1;
                     }
                     //rebuild the tree
-                    refreshTree(); 
+                    refreshTree();
                     this.parentFrm.LogMsg("doc no " + (draggedDocNo + 1).ToString() + " page no " + (draggedPageNo + 1).ToString() +
                     " to doc no" + (targetDocNo + 1).ToString() + " page no " + (targetPageNo + 1).ToString());
                 }
@@ -540,7 +540,7 @@ namespace PaperCapture
 
         public static void MoveElement(ref List<Image> list, int fromIndex, int toIndex)
         {
-            if (fromIndex == toIndex) return;            
+            if (fromIndex == toIndex) return;
             if ((fromIndex < 0) || (fromIndex >= list.Count))
             {
                 throw new ArgumentException("From index is invalid");
@@ -551,8 +551,8 @@ namespace PaperCapture
             }
 
             var element = list[fromIndex];
-           
-            
+
+
             if (fromIndex > toIndex)
             {
                 list.RemoveAt(fromIndex);
@@ -570,7 +570,104 @@ namespace PaperCapture
             this.parentFrm.LogMsg("Scan More documents");
             this.parentFrm.ContinueScanning(true, docBatch);
             Close();
-        }   
+        }
+
+        private void moveUp()
+        {
+            if (docBatch.Count <= 0)
+            {
+                return;
+            }
+            if (trvwMain.SelectedNode.PrevVisibleNode != null)
+            {
+                int sourcePageNo = trvwMain.SelectedNode.Index;
+                int sourceDocNo = trvwMain.SelectedNode.Parent.Index;
+                int targetDocNo;
+                int targetPageNo;
+                if (trvwMain.SelectedNode.PrevVisibleNode.Parent == null)
+                {   //move to another document
+                    targetDocNo = trvwMain.SelectedNode.PrevVisibleNode.Index;
+                    targetPageNo = 0; //make it the first page
+                }
+                else
+                { //page in same document selected
+                    targetDocNo = trvwMain.SelectedNode.PrevVisibleNode.Parent.Index;
+                    targetPageNo = trvwMain.SelectedNode.PrevVisibleNode.Index; 
+                }
+
+                var element = docBatch[sourceDocNo].ImgLst[sourcePageNo];
+                if (sourcePageNo > targetPageNo)
+                {
+                    docBatch[sourceDocNo].ImgLst.RemoveAt(sourcePageNo);
+                    docBatch[targetDocNo].ImgLst.Insert(targetPageNo, element);
+                }
+                else
+                {
+                    docBatch[targetDocNo].ImgLst.Insert(targetPageNo + 1, element);
+                    docBatch[sourceDocNo].ImgLst.RemoveAt(sourcePageNo);
+                }
+                if (docBatch[sourceDocNo].ImgLst.Count <= 0)
+                {
+                    docBatch.RemoveAt(sourceDocNo);
+                }
+                refreshTree();
+            }
+            trvwMain.Focus();
+        }
+
+
+        private void moveDown()
+        {
+            if (docBatch.Count <= 0)
+            {
+                return;
+            }
+            if (trvwMain.SelectedNode.NextVisibleNode != null)
+            {
+                int sourcePageNo = trvwMain.SelectedNode.Index;
+                int sourceDocNo = trvwMain.SelectedNode.Parent.Index;
+                int targetDocNo;
+                int targetPageNo;
+                if (trvwMain.SelectedNode.NextVisibleNode.Parent == null)
+                {   //move to another document
+                    targetDocNo = trvwMain.SelectedNode.NextVisibleNode.Index;
+                    targetPageNo = 0; //make it the first page
+                }
+                else
+                { //page in same document selected
+                    targetDocNo = trvwMain.SelectedNode.NextVisibleNode.Parent.Index;
+                    targetPageNo = trvwMain.SelectedNode.NextVisibleNode.Index; ;
+                }
+
+                var element = docBatch[sourceDocNo].ImgLst[sourcePageNo];
+                if (sourcePageNo > targetPageNo)
+                {
+                    docBatch[sourceDocNo].ImgLst.RemoveAt(sourcePageNo);
+                    docBatch[targetDocNo].ImgLst.Insert(targetPageNo, element);
+                }
+                else
+                {
+                    docBatch[targetDocNo].ImgLst.Insert(targetPageNo + 1, element);
+                    docBatch[sourceDocNo].ImgLst.RemoveAt(sourcePageNo);
+                }
+                if (docBatch[sourceDocNo].ImgLst.Count <= 0)
+                {
+                    docBatch.RemoveAt(sourceDocNo);
+                }
+                refreshTree();
+            }
+            trvwMain.Focus();
+        }
+
+        private void tbtnMoveDown_Click(object sender, EventArgs e)
+        {
+            moveDown();
+        }
+
+        private void tbtnUp_Click(object sender, EventArgs e)
+        {
+            moveUp();
+        }
 
     }
 }
