@@ -427,10 +427,14 @@ namespace PaperCapture
             Point targetPoint = trvwMain.PointToClient(new Point(e.X, e.Y));
 
             // Retrieve the node at the drop location.
-            TreeNode targetNode = trvwMain.GetNodeAt(targetPoint);
-
+            TreeNode targetNode = trvwMain.GetNodeAt(targetPoint);            
             // Retrieve the node that was dragged.
             TreeNode draggedNode = (TreeNode)e.Data.GetData(typeof(TreeNode));
+            if ((targetNode == null) || (draggedNode == null))
+            {
+                //one or other of the nodes not detected. return before we get an AV
+                return;
+            }
             int draggedDocNo;
             if (draggedNode.Parent == null)
             {
@@ -659,6 +663,27 @@ namespace PaperCapture
             trvwMain.Focus();
         }
 
+        private void splitPage()
+        {
+            int sourcePageNo = trvwMain.SelectedNode.Index;
+            int sourceDocNo = trvwMain.SelectedNode.Parent.Index;
+            if (docBatch[sourceDocNo].ImgLst.Count == 1)
+            {
+                tsLblStatus.Text = "You cannot split a 1 page document";
+            }
+
+            var element = docBatch[sourceDocNo].ImgLst[sourcePageNo];
+            docBatch[sourceDocNo].ImgLst.RemoveAt(sourcePageNo);
+            LCDoc vDoc = new LCDoc();
+            vDoc.SeqNo = docBatch.Count + 1;            
+            vDoc.PaperSize = ((LCDoc)(docBatch[sourceDocNo])).PaperSize;
+            //docBatch[targetDocNo].ImgLst.Insert(targetPageNo, );
+            vDoc.ImgLst.Add(element);          
+            docBatch.Add(vDoc);
+            refreshTree();
+            this.parentFrm.LogMsg("page " + sourcePageNo.ToString() + " of doc " + sourceDocNo.ToString() + " split out into document " + vDoc.SeqNo.ToString()); 
+        }
+
         private void tbtnMoveDown_Click(object sender, EventArgs e)
         {
             moveDown();
@@ -667,6 +692,11 @@ namespace PaperCapture
         private void tbtnUp_Click(object sender, EventArgs e)
         {
             moveUp();
+        }
+
+        private void toolStripButton1_Click(object sender, EventArgs e)
+        {
+            splitPage();
         }
 
     }
